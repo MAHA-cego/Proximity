@@ -7,7 +7,7 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm --filter web exec tsc --noEmit",
-    "verify": "pnpm prisma:validate && pnpm typecheck && pnpm lint && pnpm build",
+    "verify": "pnpm run prisma:generate && pnpm run prisma:validate && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run build",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:restart": "docker compose restart",
