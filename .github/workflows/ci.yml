@@ -18,6 +18,10 @@ jobs:
     name: Verify Repository
     runs-on: ubuntu-latest
 
+    env:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://proximity:proximity@localhost:5433/proximity
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
