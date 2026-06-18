@@ -1,25 +1,27 @@
 {
-    "name": "proximity",
-    "private": true,
-    "packageManager": "pnpm@10.34.3",
-    "scripts": {
-        "dev": "pnpm --filter web dev",
-        "build": "pnpm -r build",
-        "lint": "pnpm -r lint",
-        "typecheck": "pnpm --filter web exec tsc --noEmit",
-        "verify": "pnpm prisma:validate && pnpm typecheck && pnpm lint && pnpm build",
-        "db:up": "docker compose up -d",
-        "db:down": "docker compose down",
-        "db:restart": "docker compose restart",
-        "db:reset": "docker compose down -v && docker compose up -d",
-        "prisma:generate": "pnpm --filter web exec prisma generate",
-        "prisma:migrate": "pnpm --filter web exec prisma migrate dev",
-        "prisma:studio": "pnpm --filter web exec prisma studio",
-        "prisma:validate": "pnpm --filter web exec prisma validate"
-    },
-    "devDependencies": {
-        "prettier": "^3.8.4",
-        "prettier-plugin-tailwindcss": "^0.8.0",
-        "typescript": "^5.9.3"
-    }
+  "name": "proximity",
+  "private": true,
+  "packageManager": "pnpm@10.34.3",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm --filter web exec tsc --noEmit",
+    "verify": "pnpm prisma:validate && pnpm typecheck && pnpm lint && pnpm build",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:restart": "docker compose restart",
+    "db:reset": "docker compose down -v && docker compose up -d",
+    "prisma:generate": "pnpm --filter web exec prisma generate",
+    "prisma:migrate": "pnpm --filter web exec prisma migrate dev",
+    "prisma:studio": "pnpm --filter web exec prisma studio",
+    "prisma:validate": "pnpm --filter web exec prisma validate",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.4",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "typescript": "^5.9.3"
+  }
 }
