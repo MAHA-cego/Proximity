@@ -36,7 +36,7 @@ describe("findPlayerCard", () => {
           loadout: { cardDefinitionIds: [] },
         },
       ],
-      cardDefinitions: [],
+      cardDefinitions: new Map(),
     },
   });
 

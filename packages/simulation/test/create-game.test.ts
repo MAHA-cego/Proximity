@@ -30,7 +30,7 @@ describe("createGame", () => {
           { player: playerOne, loadout: { cardDefinitionIds: [] } },
           { player: playerTwo, loadout: { cardDefinitionIds: [] } },
         ],
-        cardDefinitions: [],
+        cardDefinitions: new Map(),
       },
     });
 
@@ -85,7 +85,7 @@ describe("createGame", () => {
             loadout: { cardDefinitionIds: [] },
           },
         ],
-        cardDefinitions: [],
+        cardDefinitions: new Map(),
       },
     });
 
@@ -118,7 +118,7 @@ describe("createGame", () => {
 
         definition: {
           players: [{ player, loadout: { cardDefinitionIds: [] } }],
-          cardDefinitions: [],
+          cardDefinitions: new Map(),
         },
       }),
     ).toThrow();
