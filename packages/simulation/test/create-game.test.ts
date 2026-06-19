@@ -33,7 +33,11 @@ describe("createGame", () => {
 
     expect(state.players[0].player).toEqual(playerOne);
 
+    expect(state.players[0].cards).toEqual([]);
+
     expect(state.players[1].player).toEqual(playerTwo);
+
+    expect(state.players[1].cards).toEqual([]);
 
     expect(state.turn.number).toBe(1);
 

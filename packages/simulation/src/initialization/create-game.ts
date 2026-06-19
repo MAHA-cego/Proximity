@@ -18,6 +18,7 @@ export function createGame(options: CreateGameOptions): GameState {
   const players: PlayerState[] = options.players.map((player) => ({
     player,
     health: INITIAL_PLAYER_HEALTH,
+    cards: [],
   }));
 
   return {
