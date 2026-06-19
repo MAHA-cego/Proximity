@@ -31,6 +31,7 @@ describe("Engine", () => {
           { player: playerOne, loadout: { cardDefinitionIds: [] } },
           { player: playerTwo, loadout: { cardDefinitionIds: [] } },
         ],
+        cardDefinitions: [],
       },
     });
 

@@ -32,6 +32,7 @@ describe("MatchSystem", () => {
           { player: playerOne, loadout: { cardDefinitionIds: [] } },
           { player: playerTwo, loadout: { cardDefinitionIds: [] } },
         ],
+        cardDefinitions: [],
       },
     });
 

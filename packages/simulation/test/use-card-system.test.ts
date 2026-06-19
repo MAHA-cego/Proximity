@@ -39,6 +39,7 @@ describe("UseCardSystem", () => {
             loadout: { cardDefinitionIds: [] },
           },
         ],
+        cardDefinitions: [],
       },
     });
 
