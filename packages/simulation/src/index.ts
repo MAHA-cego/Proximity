@@ -5,3 +5,4 @@ export * from "./events";
 export * from "./engine";
 export * from "./systems";
 export * from "./errors";
+export * from "./initialization";
