@@ -25,10 +25,12 @@ describe("createGame", () => {
     const state = createGame({
       matchId: "match-1" as MatchId,
 
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
-      ],
+      definition: {
+        players: [
+          { player: playerOne, loadout: { cardDefinitionIds: [] } },
+          { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        ],
+      },
     });
 
     expect(state.metadata.id).toBe("match-1");
@@ -66,21 +68,23 @@ describe("createGame", () => {
     const state = createGame({
       matchId: "match-1" as MatchId,
 
-      players: [
-        {
-          player: playerOne,
-          loadout: {
-            cardDefinitionIds: [
-              "card-a" as CardDefinitionId,
-              "card-b" as CardDefinitionId,
-            ],
+      definition: {
+        players: [
+          {
+            player: playerOne,
+            loadout: {
+              cardDefinitionIds: [
+                "card-a" as CardDefinitionId,
+                "card-b" as CardDefinitionId,
+              ],
+            },
           },
-        },
-        {
-          player: playerTwo,
-          loadout: { cardDefinitionIds: [] },
-        },
-      ],
+          {
+            player: playerTwo,
+            loadout: { cardDefinitionIds: [] },
+          },
+        ],
+      },
     });
 
     expect(state.players[0].cards).toHaveLength(2);
@@ -110,7 +114,9 @@ describe("createGame", () => {
       createGame({
         matchId: "match-1" as MatchId,
 
-        players: [{ player, loadout: { cardDefinitionIds: [] } }],
+        definition: {
+          players: [{ player, loadout: { cardDefinitionIds: [] } }],
+        },
       }),
     ).toThrow();
   });

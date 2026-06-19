@@ -28,16 +28,18 @@ describe("UseCardSystem", () => {
     const state = createGame({
       matchId: "match-1" as MatchId,
 
-      players: [
-        {
-          player: playerOne,
-          loadout: { cardDefinitionIds: ["card-a" as CardDefinitionId] },
-        },
-        {
-          player: playerTwo,
-          loadout: { cardDefinitionIds: [] },
-        },
-      ],
+      definition: {
+        players: [
+          {
+            player: playerOne,
+            loadout: { cardDefinitionIds: ["card-a" as CardDefinitionId] },
+          },
+          {
+            player: playerTwo,
+            loadout: { cardDefinitionIds: [] },
+          },
+        ],
+      },
     });
 
     const action: UseCardAction = {

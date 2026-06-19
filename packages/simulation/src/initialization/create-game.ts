@@ -1,8 +1,7 @@
 import {
   type CardInstanceId,
+  type MatchDefinition,
   type MatchId,
-  type Player,
-  type PlayerLoadout,
 } from "../core";
 
 import {
@@ -12,40 +11,36 @@ import {
   type PlayerState,
 } from "../state";
 
-export interface CreateGamePlayer {
-  readonly player: Player;
-
-  readonly loadout: PlayerLoadout;
-}
-
 export interface CreateGameOptions {
   readonly matchId: MatchId;
 
-  readonly players: readonly CreateGamePlayer[];
+  readonly definition: MatchDefinition;
 }
 
 const INITIAL_PLAYER_HEALTH = 20;
 
 export function createGame(options: CreateGameOptions): GameState {
-  if (options.players.length < 2) {
+  if (options.definition.players.length < 2) {
     throw new Error("A game requires at least two players.");
   }
 
-  const players: PlayerState[] = options.players.map(({ player, loadout }) => {
-    const cards: PlayerCardState[] = loadout.cardDefinitionIds.map(
-      (definitionId, index) => ({
-        instanceId: `${player.id}:${index + 1}` as CardInstanceId,
-        definitionId,
-        remainingCooldown: 0,
-      }),
-    );
+  const players: PlayerState[] = options.definition.players.map(
+    ({ player, loadout }) => {
+      const cards: PlayerCardState[] = loadout.cardDefinitionIds.map(
+        (definitionId, index) => ({
+          instanceId: `${player.id}:${index + 1}` as CardInstanceId,
+          definitionId,
+          remainingCooldown: 0,
+        }),
+      );
 
-    return {
-      player,
-      health: INITIAL_PLAYER_HEALTH,
-      cards,
-    };
-  });
+      return {
+        player,
+        health: INITIAL_PLAYER_HEALTH,
+        cards,
+      };
+    },
+  );
 
   return {
     metadata: {
