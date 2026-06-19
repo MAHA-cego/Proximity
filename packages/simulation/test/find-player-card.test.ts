@@ -49,6 +49,8 @@ describe("findPlayerCard", () => {
     expect(card?.instanceId).toBe("player-1:1");
 
     expect(card?.definitionId).toBe("card-a");
+
+    expect(card?.remainingCooldown).toBe(0);
   });
 
   it("returns undefined when the card does not exist", () => {

@@ -36,6 +36,7 @@ export function createGame(options: CreateGameOptions): GameState {
       (definitionId, index) => ({
         instanceId: `${player.id}:${index + 1}` as CardInstanceId,
         definitionId,
+        remainingCooldown: 0,
       }),
     );
 

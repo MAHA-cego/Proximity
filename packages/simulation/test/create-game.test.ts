@@ -89,9 +89,13 @@ describe("createGame", () => {
 
     expect(state.players[0].cards[0].definitionId).toBe("card-a");
 
+    expect(state.players[0].cards[0].remainingCooldown).toBe(0);
+
     expect(state.players[0].cards[1].instanceId).toBe("player-1:2");
 
     expect(state.players[0].cards[1].definitionId).toBe("card-b");
+
+    expect(state.players[0].cards[1].remainingCooldown).toBe(0);
 
     expect(state.players[1].cards).toEqual([]);
   });
