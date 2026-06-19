@@ -7,7 +7,7 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm --filter web exec tsc --noEmit",
-    "verify": "pnpm run prisma:generate && pnpm run prisma:validate && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run build",
+    "verify": "pnpm run prisma:generate && pnpm run prisma:validate && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm test && pnpm run build",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:restart": "docker compose restart",
@@ -17,11 +17,16 @@
     "prisma:studio": "pnpm --filter web exec prisma studio",
     "prisma:validate": "pnpm --filter web exec prisma validate",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.9",
     "prettier": "^3.8.4",
     "prettier-plugin-tailwindcss": "^0.8.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.9"
   }
 }
