@@ -25,15 +25,17 @@ describe("MatchSystem", () => {
       team: Team.Two,
     };
 
+    const definition = {
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map(),
+    };
+
     const state = createGame({
       matchId: "match-1" as MatchId,
-      definition: {
-        players: [
-          { player: playerOne, loadout: { cardDefinitionIds: [] } },
-          { player: playerTwo, loadout: { cardDefinitionIds: [] } },
-        ],
-        cardDefinitions: new Map(),
-      },
+      definition,
     });
 
     const action: ConcedeAction = {
@@ -43,7 +45,7 @@ describe("MatchSystem", () => {
 
     const engine = createEngine();
 
-    const result = engine.executeAction(state, action);
+    const result = engine.executeAction(state, action, definition);
 
     expect(result.state.status).toBe(MatchStatus.Completed);
 

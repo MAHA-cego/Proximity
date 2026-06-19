@@ -24,15 +24,17 @@ describe("Engine", () => {
       team: Team.Two,
     };
 
+    const definition = {
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map(),
+    };
+
     const state = createGame({
       matchId: "match-1" as MatchId,
-      definition: {
-        players: [
-          { player: playerOne, loadout: { cardDefinitionIds: [] } },
-          { player: playerTwo, loadout: { cardDefinitionIds: [] } },
-        ],
-        cardDefinitions: new Map(),
-      },
+      definition,
     });
 
     const action: EndTurnAction = {
@@ -42,7 +44,7 @@ describe("Engine", () => {
 
     const engine = createEngine();
 
-    const result = engine.executeAction(state, action);
+    const result = engine.executeAction(state, action, definition);
 
     expect(result.state.turn.number).toBe(2);
 

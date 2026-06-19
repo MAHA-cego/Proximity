@@ -1,4 +1,5 @@
 import type { GameAction } from "../actions";
+import type { MatchDefinition } from "../core";
 import type { GameEvent } from "../events";
 import type { GameState } from "../state";
 
@@ -12,6 +13,7 @@ export class ExecutionContext {
   public constructor(
     initialState: GameState,
     public readonly action: GameAction,
+    public readonly definition: MatchDefinition,
   ) {
     this.currentState = initialState;
   }

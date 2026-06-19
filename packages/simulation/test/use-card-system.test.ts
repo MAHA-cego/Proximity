@@ -5,6 +5,7 @@ import {
   createEngine,
   createGame,
   Team,
+  type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
   type MatchId,
@@ -14,7 +15,12 @@ import {
 } from "../src";
 
 describe("UseCardSystem", () => {
-  it("routes UseCardAction without modifying state or emitting events", () => {
+  it("applies the card definition cooldown to the used card", () => {
+    const cardA: CardDefinition = {
+      id: "card-a" as CardDefinitionId,
+      cooldown: 3,
+    };
+
     const playerOne: Player = {
       id: "player-1" as PlayerId,
       team: Team.One,
@@ -25,22 +31,17 @@ describe("UseCardSystem", () => {
       team: Team.Two,
     };
 
+    const definition = {
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map([[cardA.id, cardA]]),
+    };
+
     const state = createGame({
       matchId: "match-1" as MatchId,
-
-      definition: {
-        players: [
-          {
-            player: playerOne,
-            loadout: { cardDefinitionIds: ["card-a" as CardDefinitionId] },
-          },
-          {
-            player: playerTwo,
-            loadout: { cardDefinitionIds: [] },
-          },
-        ],
-        cardDefinitions: new Map(),
-      },
+      definition,
     });
 
     const action: UseCardAction = {
@@ -51,10 +52,12 @@ describe("UseCardSystem", () => {
 
     const engine = createEngine();
 
-    const result = engine.executeAction(state, action);
+    const result = engine.executeAction(state, action, definition);
 
-    expect(result.state).toBe(state);
+    expect(result.state.players[0].cards[0].remainingCooldown).toBe(3);
 
     expect(result.events).toEqual([]);
+
+    expect(state.players[0].cards[0].remainingCooldown).toBe(0);
   });
 });
