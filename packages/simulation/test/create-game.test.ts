@@ -4,6 +4,7 @@ import {
   createGame,
   MatchStatus,
   Team,
+  type CardDefinitionId,
   type MatchId,
   type Player,
   type PlayerId,
@@ -24,7 +25,10 @@ describe("createGame", () => {
     const state = createGame({
       matchId: "match-1" as MatchId,
 
-      players: [playerOne, playerTwo],
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
     });
 
     expect(state.metadata.id).toBe("match-1");
@@ -48,6 +52,50 @@ describe("createGame", () => {
     expect(state.sequence).toBe(0);
   });
 
+  it("initializes player cards from loadout", () => {
+    const playerOne: Player = {
+      id: "player-1" as PlayerId,
+      team: Team.One,
+    };
+
+    const playerTwo: Player = {
+      id: "player-2" as PlayerId,
+      team: Team.Two,
+    };
+
+    const state = createGame({
+      matchId: "match-1" as MatchId,
+
+      players: [
+        {
+          player: playerOne,
+          loadout: {
+            cardDefinitionIds: [
+              "card-a" as CardDefinitionId,
+              "card-b" as CardDefinitionId,
+            ],
+          },
+        },
+        {
+          player: playerTwo,
+          loadout: { cardDefinitionIds: [] },
+        },
+      ],
+    });
+
+    expect(state.players[0].cards).toHaveLength(2);
+
+    expect(state.players[0].cards[0].instanceId).toBe("player-1:1");
+
+    expect(state.players[0].cards[0].definitionId).toBe("card-a");
+
+    expect(state.players[0].cards[1].instanceId).toBe("player-1:2");
+
+    expect(state.players[0].cards[1].definitionId).toBe("card-b");
+
+    expect(state.players[1].cards).toEqual([]);
+  });
+
   it("requires at least two players", () => {
     const player: Player = {
       id: "player-1" as PlayerId,
@@ -58,7 +106,7 @@ describe("createGame", () => {
       createGame({
         matchId: "match-1" as MatchId,
 
-        players: [player],
+        players: [{ player, loadout: { cardDefinitionIds: [] } }],
       }),
     ).toThrow();
   });

@@ -27,7 +27,10 @@ describe("MatchSystem", () => {
 
     const state = createGame({
       matchId: "match-1" as MatchId,
-      players: [playerOne, playerTwo],
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
     });
 
     const action: ConcedeAction = {
