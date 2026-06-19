@@ -6,3 +6,4 @@ export * from "./engine";
 export * from "./systems";
 export * from "./errors";
 export * from "./initialization";
+export * from "./queries";
