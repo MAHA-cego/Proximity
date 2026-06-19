@@ -1,6 +1,7 @@
 import { Engine } from "./engine";
 
 import {
+  CooldownSystem,
   MatchSystem,
   SystemRegistry,
   TurnSystem,
@@ -11,6 +12,7 @@ export function createEngine(): Engine {
   return new Engine(
     new SystemRegistry([
       new TurnSystem(),
+      new CooldownSystem(),
       new MatchSystem(),
       new UseCardSystem(),
     ]),
