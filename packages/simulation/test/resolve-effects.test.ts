@@ -5,7 +5,7 @@ import {
   ActionType,
   createEngine,
   createGame,
-  IllegalActionError,
+  EffectType,
   TargetingType,
   Team,
   type CardDefinition,
@@ -17,16 +17,16 @@ import {
   type UseCardAction,
 } from "../src";
 
-describe("UseCardSystem", () => {
-  it("applies the card definition cooldown to the used card", () => {
+describe("resolveEffects", () => {
+  it("applies DamageEffect to SingleEnemy", () => {
     const cardA: CardDefinition = {
       id: "card-a" as CardDefinitionId,
-      cooldown: 3,
+      cooldown: 0,
       abilities: [
         {
           trigger: AbilityTrigger.OnUse,
-          targeting: { type: TargetingType.None },
-          effects: [],
+          targeting: { type: TargetingType.SingleEnemy },
+          effects: [{ type: EffectType.Damage, amount: 5 }],
         },
       ],
     };
@@ -36,194 +36,6 @@ describe("UseCardSystem", () => {
       team: Team.One,
       maxHealth: 20,
     };
-
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
-      team: Team.Two,
-      maxHealth: 20,
-    };
-
-    const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
-      ],
-      cardDefinitions: new Map([[cardA.id, cardA]]),
-    };
-
-    const state = createGame({
-      matchId: "match-1" as MatchId,
-      definition,
-    });
-
-    const action: UseCardAction = {
-      type: ActionType.UseCard,
-      actorId: playerOne.id,
-      cardInstanceId: "player-1:1" as CardInstanceId,
-    };
-
-    const engine = createEngine();
-
-    const result = engine.executeAction(state, action, definition);
-
-    expect(result.state.players[0].cards[0].remainingCooldown).toBe(3);
-
-    expect(result.events).toEqual([]);
-
-    expect(state.players[0].cards[0].remainingCooldown).toBe(0);
-  });
-
-  it("throws if the actor is not the active player", () => {
-    const cardA: CardDefinition = {
-      id: "card-a" as CardDefinitionId,
-      cooldown: 2,
-      abilities: [
-        {
-          trigger: AbilityTrigger.OnUse,
-          targeting: { type: TargetingType.None },
-          effects: [],
-        },
-      ],
-    };
-
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
-      team: Team.One,
-      maxHealth: 20,
-    };
-
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
-      team: Team.Two,
-      maxHealth: 20,
-    };
-
-    const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
-      ],
-      cardDefinitions: new Map([[cardA.id, cardA]]),
-    };
-
-    const state = createGame({ matchId: "match-1" as MatchId, definition });
-
-    const action: UseCardAction = {
-      type: ActionType.UseCard,
-      actorId: playerTwo.id,
-      cardInstanceId: "player-2:1" as CardInstanceId,
-    };
-
-    const engine = createEngine();
-
-    expect(() => engine.executeAction(state, action, definition)).toThrow(
-      IllegalActionError,
-    );
-  });
-
-  it("throws if the card does not exist", () => {
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
-      team: Team.One,
-      maxHealth: 20,
-    };
-
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
-      team: Team.Two,
-      maxHealth: 20,
-    };
-
-    const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
-      ],
-      cardDefinitions: new Map(),
-    };
-
-    const state = createGame({ matchId: "match-1" as MatchId, definition });
-
-    const action: UseCardAction = {
-      type: ActionType.UseCard,
-      actorId: playerOne.id,
-      cardInstanceId: "player-1:99" as CardInstanceId,
-    };
-
-    const engine = createEngine();
-
-    expect(() => engine.executeAction(state, action, definition)).toThrow(
-      IllegalActionError,
-    );
-  });
-
-  it("throws if the card is not owned by the actor", () => {
-    const cardA: CardDefinition = {
-      id: "card-a" as CardDefinitionId,
-      cooldown: 2,
-      abilities: [
-        {
-          trigger: AbilityTrigger.OnUse,
-          targeting: { type: TargetingType.None },
-          effects: [],
-        },
-      ],
-    };
-
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
-      team: Team.One,
-      maxHealth: 20,
-    };
-
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
-      team: Team.Two,
-      maxHealth: 20,
-    };
-
-    const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
-      ],
-      cardDefinitions: new Map([[cardA.id, cardA]]),
-    };
-
-    const state = createGame({ matchId: "match-1" as MatchId, definition });
-
-    const action: UseCardAction = {
-      type: ActionType.UseCard,
-      actorId: playerOne.id,
-      cardInstanceId: "player-2:1" as CardInstanceId,
-    };
-
-    const engine = createEngine();
-
-    expect(() => engine.executeAction(state, action, definition)).toThrow(
-      IllegalActionError,
-    );
-  });
-
-  it("throws if the card is on cooldown", () => {
-    const cardA: CardDefinition = {
-      id: "card-a" as CardDefinitionId,
-      cooldown: 3,
-      abilities: [
-        {
-          trigger: AbilityTrigger.OnUse,
-          targeting: { type: TargetingType.None },
-          effects: [],
-        },
-      ],
-    };
-
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
-      team: Team.One,
-      maxHealth: 20,
-    };
-
     const playerTwo: Player = {
       id: "player-2" as PlayerId,
       team: Team.Two,
@@ -246,16 +58,201 @@ describe("UseCardSystem", () => {
       cardInstanceId: "player-1:1" as CardInstanceId,
     };
 
-    const engine = createEngine();
+    const result = createEngine().executeAction(state, action, definition);
 
-    const { state: stateAfterUse } = engine.executeAction(
-      state,
-      action,
-      definition,
-    );
+    expect(result.state.players[1].health).toBe(15);
+    expect(result.state.players[0].health).toBe(20);
+    expect(state.players[1].health).toBe(20);
+  });
 
-    expect(() =>
-      engine.executeAction(stateAfterUse, action, definition),
-    ).toThrow(IllegalActionError);
+  it("applies DamageEffect to Self", () => {
+    const cardA: CardDefinition = {
+      id: "card-a" as CardDefinitionId,
+      cooldown: 0,
+      abilities: [
+        {
+          trigger: AbilityTrigger.OnUse,
+          targeting: { type: TargetingType.Self },
+          effects: [{ type: EffectType.Damage, amount: 3 }],
+        },
+      ],
+    };
+
+    const playerOne: Player = {
+      id: "player-1" as PlayerId,
+      team: Team.One,
+      maxHealth: 20,
+    };
+    const playerTwo: Player = {
+      id: "player-2" as PlayerId,
+      team: Team.Two,
+      maxHealth: 20,
+    };
+
+    const definition = {
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map([[cardA.id, cardA]]),
+    };
+
+    const state = createGame({ matchId: "match-1" as MatchId, definition });
+
+    const action: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:1" as CardInstanceId,
+    };
+
+    const result = createEngine().executeAction(state, action, definition);
+
+    expect(result.state.players[0].health).toBe(17);
+    expect(result.state.players[1].health).toBe(20);
+    expect(state.players[0].health).toBe(20);
+  });
+
+  it("applies multiple effects in authored order", () => {
+    const cardA: CardDefinition = {
+      id: "card-a" as CardDefinitionId,
+      cooldown: 0,
+      abilities: [
+        {
+          trigger: AbilityTrigger.OnUse,
+          targeting: { type: TargetingType.SingleEnemy },
+          effects: [
+            { type: EffectType.Damage, amount: 3 },
+            { type: EffectType.Damage, amount: 2 },
+          ],
+        },
+      ],
+    };
+
+    const playerOne: Player = {
+      id: "player-1" as PlayerId,
+      team: Team.One,
+      maxHealth: 20,
+    };
+    const playerTwo: Player = {
+      id: "player-2" as PlayerId,
+      team: Team.Two,
+      maxHealth: 20,
+    };
+
+    const definition = {
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map([[cardA.id, cardA]]),
+    };
+
+    const state = createGame({ matchId: "match-1" as MatchId, definition });
+
+    const action: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:1" as CardInstanceId,
+    };
+
+    const result = createEngine().executeAction(state, action, definition);
+
+    expect(result.state.players[1].health).toBe(15);
+  });
+
+  it("applies HealEffect to increase health", () => {
+    const cardA: CardDefinition = {
+      id: "card-a" as CardDefinitionId,
+      cooldown: 0,
+      abilities: [
+        {
+          trigger: AbilityTrigger.OnUse,
+          targeting: { type: TargetingType.Self },
+          effects: [
+            { type: EffectType.Damage, amount: 5 },
+            { type: EffectType.Heal, amount: 3 },
+          ],
+        },
+      ],
+    };
+
+    const playerOne: Player = {
+      id: "player-1" as PlayerId,
+      team: Team.One,
+      maxHealth: 20,
+    };
+    const playerTwo: Player = {
+      id: "player-2" as PlayerId,
+      team: Team.Two,
+      maxHealth: 20,
+    };
+
+    const definition = {
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map([[cardA.id, cardA]]),
+    };
+
+    const state = createGame({ matchId: "match-1" as MatchId, definition });
+
+    const action: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:1" as CardInstanceId,
+    };
+
+    const result = createEngine().executeAction(state, action, definition);
+
+    expect(result.state.players[0].health).toBe(18);
+  });
+
+  it("clamps HealEffect at maxHealth", () => {
+    const cardA: CardDefinition = {
+      id: "card-a" as CardDefinitionId,
+      cooldown: 0,
+      abilities: [
+        {
+          trigger: AbilityTrigger.OnUse,
+          targeting: { type: TargetingType.Self },
+          effects: [
+            { type: EffectType.Damage, amount: 5 },
+            { type: EffectType.Heal, amount: 15 },
+          ],
+        },
+      ],
+    };
+
+    const playerOne: Player = {
+      id: "player-1" as PlayerId,
+      team: Team.One,
+      maxHealth: 10,
+    };
+    const playerTwo: Player = {
+      id: "player-2" as PlayerId,
+      team: Team.Two,
+      maxHealth: 10,
+    };
+
+    const definition = {
+      players: [
+        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map([[cardA.id, cardA]]),
+    };
+
+    const state = createGame({ matchId: "match-1" as MatchId, definition });
+
+    const action: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:1" as CardInstanceId,
+    };
+
+    const result = createEngine().executeAction(state, action, definition);
+
+    expect(result.state.players[0].health).toBe(10);
   });
 });

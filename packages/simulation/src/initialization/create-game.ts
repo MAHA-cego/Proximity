@@ -17,8 +17,6 @@ export interface CreateGameOptions {
   readonly definition: MatchDefinition;
 }
 
-const INITIAL_PLAYER_HEALTH = 20;
-
 export function createGame(options: CreateGameOptions): GameState {
   if (options.definition.players.length < 2) {
     throw new Error("A game requires at least two players.");
@@ -36,7 +34,7 @@ export function createGame(options: CreateGameOptions): GameState {
 
       return {
         player,
-        health: INITIAL_PLAYER_HEALTH,
+        health: player.maxHealth,
         cards,
       };
     },

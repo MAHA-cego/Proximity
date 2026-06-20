@@ -1,4 +1,6 @@
 import { ActionType } from "../actions";
+import { AbilityTrigger } from "../core";
+import { resolveEffects } from "../effects";
 import { IllegalActionError } from "../errors";
 import type { ExecutionContext } from "../engine/execution-context";
 
@@ -73,5 +75,11 @@ export class UseCardSystem implements GameSystem {
     ];
 
     context.replaceState({ ...state, players: updatedPlayers });
+
+    for (const ability of cardDefinition.abilities) {
+      if (ability.trigger === AbilityTrigger.OnUse) {
+        resolveEffects(context, ability);
+      }
+    }
   }
 }

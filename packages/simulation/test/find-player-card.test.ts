@@ -15,11 +15,13 @@ describe("findPlayerCard", () => {
   const playerOne: Player = {
     id: "player-1" as PlayerId,
     team: Team.One,
+    maxHealth: 20,
   };
 
   const playerTwo: Player = {
     id: "player-2" as PlayerId,
     team: Team.Two,
+    maxHealth: 20,
   };
 
   const state = createGame({

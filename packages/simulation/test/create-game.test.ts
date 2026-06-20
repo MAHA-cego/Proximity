@@ -15,11 +15,13 @@ describe("createGame", () => {
     const playerOne: Player = {
       id: "player-1" as PlayerId,
       team: Team.One,
+      maxHealth: 30,
     };
 
     const playerTwo: Player = {
       id: "player-2" as PlayerId,
       team: Team.Two,
+      maxHealth: 30,
     };
 
     const state = createGame({
@@ -46,6 +48,10 @@ describe("createGame", () => {
 
     expect(state.players[1].cards).toEqual([]);
 
+    expect(state.players[0].health).toBe(30);
+
+    expect(state.players[1].health).toBe(30);
+
     expect(state.turn.number).toBe(1);
 
     expect(state.turn.activePlayerId).toBe(playerOne.id);
@@ -59,11 +65,13 @@ describe("createGame", () => {
     const playerOne: Player = {
       id: "player-1" as PlayerId,
       team: Team.One,
+      maxHealth: 20,
     };
 
     const playerTwo: Player = {
       id: "player-2" as PlayerId,
       team: Team.Two,
+      maxHealth: 20,
     };
 
     const state = createGame({
@@ -110,6 +118,7 @@ describe("createGame", () => {
     const player: Player = {
       id: "player-1" as PlayerId,
       team: Team.One,
+      maxHealth: 20,
     };
 
     expect(() =>

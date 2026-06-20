@@ -5,6 +5,7 @@ export * from "./card-definition";
 export * from "./card-effect";
 export * from "./damage-effect";
 export * from "./effect-type";
+export * from "./heal-effect";
 export * from "./ids";
 export * from "./match-definition";
 export * from "./match-player";

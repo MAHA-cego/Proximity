@@ -13,8 +13,8 @@ export function createEngine(): Engine {
     new SystemRegistry([
       new TurnSystem(),
       new CooldownSystem(),
-      new MatchSystem(),
       new UseCardSystem(),
+      new MatchSystem(),
     ]),
   );
 }
