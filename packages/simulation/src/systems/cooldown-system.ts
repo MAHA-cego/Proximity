@@ -46,6 +46,7 @@ export class CooldownSystem implements GameSystem {
         context,
         AbilityTrigger.OnTurnStart,
         cardDefinition.abilities,
+        updatedPlayerState.player.id,
       );
     }
   }

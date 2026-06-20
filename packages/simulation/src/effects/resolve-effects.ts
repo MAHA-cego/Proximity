@@ -1,21 +1,27 @@
-import { EffectType, TargetingType, type CardAbility } from "../core";
+import {
+  EffectType,
+  TargetingType,
+  type CardAbility,
+  type PlayerId,
+} from "../core";
 import type { ExecutionContext } from "../engine";
 
 export function resolveEffects(
   context: ExecutionContext,
   ability: CardAbility,
+  actorId?: PlayerId,
 ): ExecutionContext {
-  const actorId = context.action.actorId;
+  const resolvedActorId = actorId ?? context.action.actorId;
 
   let targetIndex = -1;
 
   if (ability.targeting.type === TargetingType.SingleEnemy) {
     targetIndex = context.state.players.findIndex(
-      (ps) => ps.player.id !== actorId,
+      (ps) => ps.player.id !== resolvedActorId,
     );
   } else if (ability.targeting.type === TargetingType.Self) {
     targetIndex = context.state.players.findIndex(
-      (ps) => ps.player.id === actorId,
+      (ps) => ps.player.id === resolvedActorId,
     );
   }
 
