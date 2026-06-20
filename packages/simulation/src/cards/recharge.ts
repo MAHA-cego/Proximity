@@ -5,19 +5,19 @@ import {
   type CardDefinition,
   type CardDefinitionId,
 } from "../core";
-import { FINISHING_BLOW_ID } from "./finishing-blow";
+import { BASIC_STRIKE_ID } from "./basic-strike";
 
-export const ADRENALINE_RUSH_ID = "adrenaline-rush" as CardDefinitionId;
+export const RECHARGE_ID = "recharge" as CardDefinitionId;
 
-export const AdrenalineRush: CardDefinition = {
-  id: ADRENALINE_RUSH_ID,
-  cooldown: 3,
+export const Recharge: CardDefinition = {
+  id: RECHARGE_ID,
+  cooldown: 2,
   abilities: [
     {
       trigger: AbilityTrigger.OnUse,
       targeting: {
         type: TargetingType.Card,
-        cardDefinitionId: FINISHING_BLOW_ID,
+        cardDefinitionId: BASIC_STRIKE_ID,
       },
       effects: [{ type: EffectType.RefreshCooldown }],
     },

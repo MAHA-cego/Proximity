@@ -7,11 +7,11 @@ import {
 } from "../core";
 import { BASIC_STRIKE_ID } from "./basic-strike";
 
-export const SECOND_WIND_ID = "second-wind" as CardDefinitionId;
+export const OVERLOAD_ID = "overload" as CardDefinitionId;
 
-export const SecondWind: CardDefinition = {
-  id: SECOND_WIND_ID,
-  cooldown: 3,
+export const Overload: CardDefinition = {
+  id: OVERLOAD_ID,
+  cooldown: 0,
   abilities: [
     {
       trigger: AbilityTrigger.OnUse,
@@ -19,7 +19,7 @@ export const SecondWind: CardDefinition = {
         type: TargetingType.Card,
         cardDefinitionId: BASIC_STRIKE_ID,
       },
-      effects: [{ type: EffectType.RefreshCooldown }],
+      effects: [{ type: EffectType.ExtendCooldown, amount: 2 }],
     },
   ],
 };

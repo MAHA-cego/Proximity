@@ -409,13 +409,11 @@ describe("RefreshCooldownEffect", () => {
       abilities: [
         {
           trigger: AbilityTrigger.OnUse,
-          targeting: { type: TargetingType.Self },
-          effects: [
-            {
-              type: EffectType.RefreshCooldown,
-              cardDefinitionId: "card-b" as CardDefinitionId,
-            },
-          ],
+          targeting: {
+            type: TargetingType.Card,
+            cardDefinitionId: "card-b" as CardDefinitionId,
+          },
+          effects: [{ type: EffectType.RefreshCooldown }],
         },
       ],
     };

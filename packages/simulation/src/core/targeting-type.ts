@@ -4,4 +4,6 @@ export enum TargetingType {
   Self = "SELF",
 
   SingleEnemy = "SINGLE_ENEMY",
+
+  Card = "CARD",
 }
