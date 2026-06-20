@@ -1,4 +1,5 @@
 import type { ApplyModifierEffect } from "./apply-modifier-effect";
+import type { ApplyStatusEffect } from "./apply-status-effect";
 import type { DamageEffect } from "./damage-effect";
 import type { ExtendCooldownEffect } from "./extend-cooldown-effect";
 import type { HealEffect } from "./heal-effect";
@@ -11,4 +12,5 @@ export type LeafEffect =
   | ReduceCooldownEffect
   | RefreshCooldownEffect
   | ExtendCooldownEffect
-  | ApplyModifierEffect;
+  | ApplyModifierEffect
+  | ApplyStatusEffect;

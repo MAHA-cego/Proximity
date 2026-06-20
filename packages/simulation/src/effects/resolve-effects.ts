@@ -1,11 +1,13 @@
 import {
   EffectType,
   ModifierType,
+  StatusType,
   TargetingType,
   type CardAbility,
   type CardEffect,
   type PlayerId,
   type RuntimeModifier,
+  type RuntimeStatus,
 } from "../core";
 import type { ExecutionContext } from "../engine";
 import { checkRequirement } from "./check-requirement";
@@ -136,9 +138,14 @@ function dispatchEffect(
       for (const targetIndex of targetIndices) {
         const { state } = context;
         const target = state.players[targetIndex];
+        const shieldStatus = target.statuses.find(
+          (s) => s.type === StatusType.Shield,
+        );
+        const shieldReduction = shieldStatus ? shieldStatus.amount : 0;
+        const actualDamage = Math.max(0, totalDamage - shieldReduction);
         const updatedPlayer = {
           ...target,
-          health: target.health - totalDamage,
+          health: target.health - actualDamage,
         };
         const updatedPlayers = [
           ...state.players.slice(0, targetIndex),
@@ -285,6 +292,29 @@ function dispatchEffect(
         const updatedPlayer = {
           ...target,
           modifiers: [...target.modifiers, newModifier],
+        };
+        const updatedPlayers = [
+          ...state.players.slice(0, targetIndex),
+          updatedPlayer,
+          ...state.players.slice(targetIndex + 1),
+        ];
+        context.replaceState({ ...state, players: updatedPlayers });
+      }
+      break;
+    }
+
+    case EffectType.ApplyStatus: {
+      for (const targetIndex of targetIndices) {
+        const { state } = context;
+        const target = state.players[targetIndex];
+        const newStatus: RuntimeStatus = {
+          type: effect.statusType,
+          remainingDuration: effect.duration,
+          amount: effect.amount,
+        };
+        const updatedPlayer = {
+          ...target,
+          statuses: [...target.statuses, newStatus],
         };
         const updatedPlayers = [
           ...state.players.slice(0, targetIndex),

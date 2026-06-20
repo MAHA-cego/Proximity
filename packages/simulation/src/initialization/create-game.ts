@@ -37,6 +37,7 @@ export function createGame(options: CreateGameOptions): GameState {
         health: player.maxHealth,
         cards,
         modifiers: [],
+        statuses: [],
       };
     },
   );

@@ -1,4 +1,7 @@
 export * from "./accelerate";
+export * from "./ignite";
+export * from "./iron-will";
+export * from "./mending-touch";
 export * from "./adrenaline-rush";
 export * from "./battle-cry";
 export * from "./chain-lightning";

@@ -14,4 +14,6 @@ export enum EffectType {
   Conditional = "CONDITIONAL",
 
   Group = "GROUP",
+
+  ApplyStatus = "APPLY_STATUS",
 }

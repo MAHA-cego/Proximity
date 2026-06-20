@@ -1,4 +1,4 @@
-import type { Player, RuntimeModifier } from "../core";
+import type { Player, RuntimeModifier, RuntimeStatus } from "../core";
 
 import type { PlayerCardState } from "./player-card-state";
 
@@ -10,4 +10,6 @@ export interface PlayerState {
   readonly cards: readonly PlayerCardState[];
 
   readonly modifiers: readonly RuntimeModifier[];
+
+  readonly statuses: readonly RuntimeStatus[];
 }
