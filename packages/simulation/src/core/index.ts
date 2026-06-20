@@ -1,4 +1,5 @@
 export * from "./ability-requirement";
+export * from "./apply-modifier-effect";
 export * from "./ability-trigger";
 export * from "./brand";
 export * from "./card-ability";
@@ -11,6 +12,8 @@ export * from "./heal-effect";
 export * from "./health-requirement";
 export * from "./ids";
 export * from "./match-definition";
+export * from "./modifier-type";
+export * from "./runtime-modifier";
 export * from "./match-player";
 export * from "./player";
 export * from "./player-loadout";

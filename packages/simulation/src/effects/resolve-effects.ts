@@ -1,8 +1,10 @@
 import {
   EffectType,
+  ModifierType,
   TargetingType,
   type CardAbility,
   type PlayerId,
+  type RuntimeModifier,
 } from "../core";
 import type { ExecutionContext } from "../engine";
 
@@ -47,12 +49,44 @@ export function resolveEffects(
   for (const effect of ability.effects) {
     switch (effect.type) {
       case EffectType.Damage: {
+        const actorIdx = context.state.players.findIndex(
+          (ps) => ps.player.id === resolvedActorId,
+        );
+        const actorState = context.state.players[actorIdx];
+        const damageModifiers = actorState.modifiers.filter(
+          (m) => m.type === ModifierType.Damage,
+        );
+        const modifierBonus = damageModifiers.reduce(
+          (sum, m) => sum + m.amount,
+          0,
+        );
+
+        if (damageModifiers.length > 0) {
+          const consumedModifiers = actorState.modifiers
+            .map(
+              (m): RuntimeModifier =>
+                m.type === ModifierType.Damage
+                  ? { ...m, remainingUses: m.remainingUses - 1 }
+                  : m,
+            )
+            .filter((m) => m.remainingUses > 0);
+          const updatedActor = { ...actorState, modifiers: consumedModifiers };
+          const updatedPlayers = [
+            ...context.state.players.slice(0, actorIdx),
+            updatedActor,
+            ...context.state.players.slice(actorIdx + 1),
+          ];
+          context.replaceState({ ...context.state, players: updatedPlayers });
+        }
+
+        const totalDamage = effect.amount + modifierBonus;
+
         for (const targetIndex of targetIndices) {
           const { state } = context;
           const target = state.players[targetIndex];
           const updatedPlayer = {
             ...target,
-            health: target.health - effect.amount,
+            health: target.health - totalDamage,
           };
           const updatedPlayers = [
             ...state.players.slice(0, targetIndex),
@@ -65,6 +99,38 @@ export function resolveEffects(
       }
 
       case EffectType.Heal: {
+        const actorIdx = context.state.players.findIndex(
+          (ps) => ps.player.id === resolvedActorId,
+        );
+        const actorState = context.state.players[actorIdx];
+        const healModifiers = actorState.modifiers.filter(
+          (m) => m.type === ModifierType.Heal,
+        );
+        const modifierBonus = healModifiers.reduce(
+          (sum, m) => sum + m.amount,
+          0,
+        );
+
+        if (healModifiers.length > 0) {
+          const consumedModifiers = actorState.modifiers
+            .map(
+              (m): RuntimeModifier =>
+                m.type === ModifierType.Heal
+                  ? { ...m, remainingUses: m.remainingUses - 1 }
+                  : m,
+            )
+            .filter((m) => m.remainingUses > 0);
+          const updatedActor = { ...actorState, modifiers: consumedModifiers };
+          const updatedPlayers = [
+            ...context.state.players.slice(0, actorIdx),
+            updatedActor,
+            ...context.state.players.slice(actorIdx + 1),
+          ];
+          context.replaceState({ ...context.state, players: updatedPlayers });
+        }
+
+        const totalHeal = effect.amount + modifierBonus;
+
         for (const targetIndex of targetIndices) {
           const { state } = context;
           const target = state.players[targetIndex];
@@ -74,7 +140,7 @@ export function resolveEffects(
           const maxHealth = matchPlayer!.player.maxHealth;
           const updatedPlayer = {
             ...target,
-            health: Math.min(target.health + effect.amount, maxHealth),
+            health: Math.min(target.health + totalHeal, maxHealth),
           };
           const updatedPlayers = [
             ...state.players.slice(0, targetIndex),
@@ -161,6 +227,29 @@ export function resolveEffects(
         ];
 
         context.replaceState({ ...state, players: updatedPlayers });
+        break;
+      }
+
+      case EffectType.ApplyModifier: {
+        for (const targetIndex of targetIndices) {
+          const { state } = context;
+          const target = state.players[targetIndex];
+          const newModifier: RuntimeModifier = {
+            type: effect.modifierType,
+            amount: effect.amount,
+            remainingUses: effect.uses,
+          };
+          const updatedPlayer = {
+            ...target,
+            modifiers: [...target.modifiers, newModifier],
+          };
+          const updatedPlayers = [
+            ...state.players.slice(0, targetIndex),
+            updatedPlayer,
+            ...state.players.slice(targetIndex + 1),
+          ];
+          context.replaceState({ ...state, players: updatedPlayers });
+        }
         break;
       }
     }

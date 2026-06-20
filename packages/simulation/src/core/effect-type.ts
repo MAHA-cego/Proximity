@@ -8,4 +8,6 @@ export enum EffectType {
   RefreshCooldown = "REFRESH_COOLDOWN",
 
   ExtendCooldown = "EXTEND_COOLDOWN",
+
+  ApplyModifier = "APPLY_MODIFIER",
 }

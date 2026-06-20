@@ -1,3 +1,4 @@
+import type { ApplyModifierEffect } from "./apply-modifier-effect";
 import type { DamageEffect } from "./damage-effect";
 import type { ExtendCooldownEffect } from "./extend-cooldown-effect";
 import type { HealEffect } from "./heal-effect";
@@ -9,4 +10,5 @@ export type CardEffect =
   | HealEffect
   | ReduceCooldownEffect
   | RefreshCooldownEffect
-  | ExtendCooldownEffect;
+  | ExtendCooldownEffect
+  | ApplyModifierEffect;
