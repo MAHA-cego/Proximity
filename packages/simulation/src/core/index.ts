@@ -11,6 +11,8 @@ export * from "./match-definition";
 export * from "./match-player";
 export * from "./player";
 export * from "./player-loadout";
+export * from "./reduce-cooldown-effect";
+export * from "./refresh-cooldown-effect";
 export * from "./targeting";
 export * from "./targeting-type";
 export * from "./team";

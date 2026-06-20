@@ -74,6 +74,70 @@ export function resolveEffects(
         context.replaceState({ ...state, players: updatedPlayers });
         break;
       }
+
+      case EffectType.ReduceCooldown: {
+        if (targetIndex === -1) break;
+
+        const { state } = context;
+        const target = state.players[targetIndex];
+        const cardIndex = target.cards.findIndex(
+          (c) => c.definitionId === effect.cardDefinitionId,
+        );
+
+        if (cardIndex === -1) break;
+
+        const card = target.cards[cardIndex];
+        const updatedCard = {
+          ...card,
+          remainingCooldown: Math.max(
+            0,
+            card.remainingCooldown - effect.amount,
+          ),
+        };
+        const updatedCards = [
+          ...target.cards.slice(0, cardIndex),
+          updatedCard,
+          ...target.cards.slice(cardIndex + 1),
+        ];
+        const updatedPlayer = { ...target, cards: updatedCards };
+        const updatedPlayers = [
+          ...state.players.slice(0, targetIndex),
+          updatedPlayer,
+          ...state.players.slice(targetIndex + 1),
+        ];
+
+        context.replaceState({ ...state, players: updatedPlayers });
+        break;
+      }
+
+      case EffectType.RefreshCooldown: {
+        if (targetIndex === -1) break;
+
+        const { state } = context;
+        const target = state.players[targetIndex];
+        const cardIndex = target.cards.findIndex(
+          (c) => c.definitionId === effect.cardDefinitionId,
+        );
+
+        if (cardIndex === -1) break;
+
+        const card = target.cards[cardIndex];
+        const updatedCard = { ...card, remainingCooldown: 0 };
+        const updatedCards = [
+          ...target.cards.slice(0, cardIndex),
+          updatedCard,
+          ...target.cards.slice(cardIndex + 1),
+        ];
+        const updatedPlayer = { ...target, cards: updatedCards };
+        const updatedPlayers = [
+          ...state.players.slice(0, targetIndex),
+          updatedPlayer,
+          ...state.players.slice(targetIndex + 1),
+        ];
+
+        context.replaceState({ ...state, players: updatedPlayers });
+        break;
+      }
     }
   }
 
