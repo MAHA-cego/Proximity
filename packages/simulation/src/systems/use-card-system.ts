@@ -1,5 +1,11 @@
 import { ActionType } from "../actions";
-import { AbilityTrigger } from "../core";
+import {
+  AbilityTrigger,
+  Comparison,
+  RequirementType,
+  type AbilityRequirement,
+  type PlayerId,
+} from "../core";
 import { dispatchTrigger } from "../effects";
 import { IllegalActionError } from "../errors";
 import type { ExecutionContext } from "../engine/execution-context";
@@ -62,6 +68,15 @@ export class UseCardSystem implements GameSystem {
       card.definitionId,
     )!;
 
+    for (const ability of cardDefinition.abilities) {
+      if (ability.trigger !== AbilityTrigger.OnUse) continue;
+      for (const req of ability.requirements ?? []) {
+        if (!checkRequirement(context, req, action.actorId)) {
+          throw IllegalActionError.requirementNotMet();
+        }
+      }
+    }
+
     const updatedCards = [
       ...playerState.cards.slice(0, cardIndex),
       { ...card, remainingCooldown: cardDefinition.cooldown },
@@ -77,5 +92,23 @@ export class UseCardSystem implements GameSystem {
     context.replaceState({ ...state, players: updatedPlayers });
 
     dispatchTrigger(context, AbilityTrigger.OnUse, cardDefinition.abilities);
+  }
+}
+
+function checkRequirement(
+  context: ExecutionContext,
+  req: AbilityRequirement,
+  actorId: PlayerId,
+): boolean {
+  switch (req.type) {
+    case RequirementType.Health: {
+      const actorState = context.state.players.find(
+        (ps) => ps.player.id === actorId,
+      );
+      if (!actorState) return false;
+      if (req.comparison === Comparison.Below)
+        return actorState.health < req.threshold;
+      return actorState.health > req.threshold;
+    }
   }
 }

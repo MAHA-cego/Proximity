@@ -25,6 +25,10 @@ export class IllegalActionError extends SimulationError {
     return new IllegalActionError("The card cannot be used while on cooldown.");
   }
 
+  public static requirementNotMet(): IllegalActionError {
+    return new IllegalActionError("The ability requirement is not satisfied.");
+  }
+
   private constructor(message: string) {
     super(message);
   }
