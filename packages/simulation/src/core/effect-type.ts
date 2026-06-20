@@ -10,4 +10,8 @@ export enum EffectType {
   ExtendCooldown = "EXTEND_COOLDOWN",
 
   ApplyModifier = "APPLY_MODIFIER",
+
+  Conditional = "CONDITIONAL",
+
+  Group = "GROUP",
 }

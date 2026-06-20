@@ -1,15 +1,6 @@
 import { ActionType } from "../actions";
-import {
-  AbilityTrigger,
-  Comparison,
-  RequirementSubject,
-  RequirementType,
-  type AbilityRequirement,
-  type MatchDefinition,
-  type MatchId,
-  type PlayerId,
-} from "../core";
-import { dispatchTrigger } from "../effects";
+import { AbilityTrigger, type MatchDefinition, type MatchId } from "../core";
+import { checkRequirement, dispatchTrigger } from "../effects";
 import { IllegalActionError, InvalidActionError } from "../errors";
 import { createGame } from "../initialization";
 import type { GameState } from "../state";
@@ -112,33 +103,10 @@ export class Engine {
     for (const ability of cardDefinition.abilities) {
       if (ability.trigger !== AbilityTrigger.OnUse) continue;
       for (const req of ability.requirements ?? []) {
-        if (!checkRequirement(context, req, action.actorId)) {
+        if (!checkRequirement(context.state, req, action.actorId)) {
           throw InvalidActionError.requirementNotMet();
         }
       }
-    }
-  }
-}
-
-function checkRequirement(
-  context: ExecutionContext,
-  req: AbilityRequirement,
-  actorId: PlayerId,
-): boolean {
-  switch (req.type) {
-    case RequirementType.Health: {
-      const resolvedId =
-        req.subject === RequirementSubject.Enemy
-          ? context.state.players.find((ps) => ps.player.id !== actorId)?.player
-              .id
-          : actorId;
-      const subjectState = context.state.players.find(
-        (ps) => ps.player.id === resolvedId,
-      );
-      if (!subjectState) return false;
-      if (req.comparison === Comparison.Below)
-        return subjectState.health < req.threshold;
-      return subjectState.health > req.threshold;
     }
   }
 }
