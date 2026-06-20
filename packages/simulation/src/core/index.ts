@@ -16,6 +16,7 @@ export * from "./player";
 export * from "./player-loadout";
 export * from "./reduce-cooldown-effect";
 export * from "./refresh-cooldown-effect";
+export * from "./requirement-subject";
 export * from "./requirement-type";
 export * from "./targeting";
 export * from "./targeting-type";

@@ -2,6 +2,7 @@ import { ActionType } from "../actions";
 import {
   AbilityTrigger,
   Comparison,
+  RequirementSubject,
   RequirementType,
   type AbilityRequirement,
   type PlayerId,
@@ -102,13 +103,18 @@ function checkRequirement(
 ): boolean {
   switch (req.type) {
     case RequirementType.Health: {
-      const actorState = context.state.players.find(
-        (ps) => ps.player.id === actorId,
+      const resolvedId =
+        req.subject === RequirementSubject.Enemy
+          ? context.state.players.find((ps) => ps.player.id !== actorId)?.player
+              .id
+          : actorId;
+      const subjectState = context.state.players.find(
+        (ps) => ps.player.id === resolvedId,
       );
-      if (!actorState) return false;
+      if (!subjectState) return false;
       if (req.comparison === Comparison.Below)
-        return actorState.health < req.threshold;
-      return actorState.health > req.threshold;
+        return subjectState.health < req.threshold;
+      return subjectState.health > req.threshold;
     }
   }
 }
