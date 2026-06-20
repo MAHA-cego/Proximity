@@ -88,17 +88,11 @@ export function resolveEffects(
       }
 
       case EffectType.ReduceCooldown: {
-        if (targetIndex === -1) break;
+        if (cardTargetPlayerIndex === -1 || cardTargetCardIndex === -1) break;
 
         const { state } = context;
-        const target = state.players[targetIndex];
-        const cardIndex = target.cards.findIndex(
-          (c) => c.definitionId === effect.cardDefinitionId,
-        );
-
-        if (cardIndex === -1) break;
-
-        const card = target.cards[cardIndex];
+        const player = state.players[cardTargetPlayerIndex];
+        const card = player.cards[cardTargetCardIndex];
         const updatedCard = {
           ...card,
           remainingCooldown: Math.max(
@@ -107,15 +101,15 @@ export function resolveEffects(
           ),
         };
         const updatedCards = [
-          ...target.cards.slice(0, cardIndex),
+          ...player.cards.slice(0, cardTargetCardIndex),
           updatedCard,
-          ...target.cards.slice(cardIndex + 1),
+          ...player.cards.slice(cardTargetCardIndex + 1),
         ];
-        const updatedPlayer = { ...target, cards: updatedCards };
+        const updatedPlayer = { ...player, cards: updatedCards };
         const updatedPlayers = [
-          ...state.players.slice(0, targetIndex),
+          ...state.players.slice(0, cardTargetPlayerIndex),
           updatedPlayer,
-          ...state.players.slice(targetIndex + 1),
+          ...state.players.slice(cardTargetPlayerIndex + 1),
         ];
 
         context.replaceState({ ...state, players: updatedPlayers });

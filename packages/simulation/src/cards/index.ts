@@ -1,3 +1,4 @@
+export * from "./accelerate";
 export * from "./adrenaline-rush";
 export * from "./basic-strike";
 export * from "./desperation";

@@ -20,14 +20,11 @@ export const TacticalBurst: CardDefinition = {
     },
     {
       trigger: AbilityTrigger.OnUse,
-      targeting: { type: TargetingType.Self },
-      effects: [
-        {
-          type: EffectType.ReduceCooldown,
-          cardDefinitionId: FINISHING_BLOW_ID,
-          amount: 1,
-        },
-      ],
+      targeting: {
+        type: TargetingType.Card,
+        cardDefinitionId: FINISHING_BLOW_ID,
+      },
+      effects: [{ type: EffectType.ReduceCooldown, amount: 1 }],
     },
   ],
 };

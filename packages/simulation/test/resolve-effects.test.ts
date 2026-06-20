@@ -258,21 +258,18 @@ describe("resolveEffects", () => {
 });
 
 describe("ReduceCooldownEffect", () => {
-  it("reduces remaining cooldown of target card on self", () => {
+  it("reduces remaining cooldown of target card", () => {
     const cardA: CardDefinition = {
       id: "card-a" as CardDefinitionId,
       cooldown: 0,
       abilities: [
         {
           trigger: AbilityTrigger.OnUse,
-          targeting: { type: TargetingType.Self },
-          effects: [
-            {
-              type: EffectType.ReduceCooldown,
-              cardDefinitionId: "card-b" as CardDefinitionId,
-              amount: 1,
-            },
-          ],
+          targeting: {
+            type: TargetingType.Card,
+            cardDefinitionId: "card-b" as CardDefinitionId,
+          },
+          effects: [{ type: EffectType.ReduceCooldown, amount: 1 }],
         },
       ],
     };
@@ -337,14 +334,11 @@ describe("ReduceCooldownEffect", () => {
       abilities: [
         {
           trigger: AbilityTrigger.OnUse,
-          targeting: { type: TargetingType.Self },
-          effects: [
-            {
-              type: EffectType.ReduceCooldown,
-              cardDefinitionId: "card-b" as CardDefinitionId,
-              amount: 5,
-            },
-          ],
+          targeting: {
+            type: TargetingType.Card,
+            cardDefinitionId: "card-b" as CardDefinitionId,
+          },
+          effects: [{ type: EffectType.ReduceCooldown, amount: 5 }],
         },
       ],
     };
@@ -483,20 +477,10 @@ describe("Multiple Effect Composition", () => {
           targeting: { type: TargetingType.Self },
           effects: [
             { type: EffectType.Damage, amount: 3 },
-            {
-              type: EffectType.ReduceCooldown,
-              cardDefinitionId: "card-b" as CardDefinitionId,
-              amount: 2,
-            },
+            { type: EffectType.Heal, amount: 1 },
           ],
         },
       ],
-    };
-
-    const cardB: CardDefinition = {
-      id: "card-b" as CardDefinitionId,
-      cooldown: 3,
-      abilities: [],
     };
 
     const playerOne: Player = {
@@ -512,36 +496,24 @@ describe("Multiple Effect Composition", () => {
 
     const definition = {
       players: [
-        {
-          player: playerOne,
-          loadout: { cardDefinitionIds: [cardA.id, cardB.id] },
-        },
+        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
         { player: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
-      cardDefinitions: new Map([
-        [cardA.id, cardA],
-        [cardB.id, cardB],
-      ]),
+      cardDefinitions: new Map([[cardA.id, cardA]]),
     };
 
-    const engine = createEngine();
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    const useCardB: UseCardAction = {
-      type: ActionType.UseCard,
-      actorId: playerOne.id,
-      cardInstanceId: "player-1:2" as CardInstanceId,
-    };
-    const state2 = engine.executeAction(state, useCardB, definition).state;
-
-    const useCardA: UseCardAction = {
+    const action: UseCardAction = {
       type: ActionType.UseCard,
       actorId: playerOne.id,
       cardInstanceId: "player-1:1" as CardInstanceId,
     };
-    const result = engine.executeAction(state2, useCardA, definition);
 
-    expect(result.state.players[0].health).toBe(17);
-    expect(result.state.players[0].cards[1].remainingCooldown).toBe(1);
+    const result = createEngine().executeAction(state, action, definition);
+
+    // Damage fires first (20 → 17), then Heal (17 → 18).
+    // If Heal fired first, result would be clamped to 20 then Damage to 17.
+    expect(result.state.players[0].health).toBe(18);
   });
 });

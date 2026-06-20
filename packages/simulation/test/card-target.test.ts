@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  Accelerate,
+  ACCELERATE_ID,
   ActionType,
   BASIC_STRIKE_ID,
   BasicStrike,
@@ -178,5 +180,114 @@ describe("Overload", () => {
     const result = engine.executeAction(state2, useOverload, definition);
 
     expect(result.state.players[0].cards[0].remainingCooldown).toBe(3);
+  });
+});
+
+describe("Accelerate", () => {
+  it("reduces Basic Strike cooldown by 1", () => {
+    const definition = {
+      players: [
+        {
+          player: playerOne,
+          loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, ACCELERATE_ID] },
+        },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map([
+        [BASIC_STRIKE_ID, BasicStrike],
+        [ACCELERATE_ID, Accelerate],
+      ]),
+    };
+
+    const engine = createEngine();
+    const state = createGame({ matchId: "match-1" as MatchId, definition });
+
+    const useStrike: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:1" as CardInstanceId,
+    };
+
+    const state2 = engine.executeAction(state, useStrike, definition).state;
+
+    expect(state2.players[0].cards[0].remainingCooldown).toBe(1);
+
+    const useAccelerate: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:2" as CardInstanceId,
+    };
+
+    const result = engine.executeAction(state2, useAccelerate, definition);
+
+    expect(result.state.players[0].cards[0].remainingCooldown).toBe(0);
+  });
+
+  it("clamps at zero when cooldown is already zero", () => {
+    const definition = {
+      players: [
+        {
+          player: playerOne,
+          loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, ACCELERATE_ID] },
+        },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map([
+        [BASIC_STRIKE_ID, BasicStrike],
+        [ACCELERATE_ID, Accelerate],
+      ]),
+    };
+
+    const engine = createEngine();
+    const state = createGame({ matchId: "match-1" as MatchId, definition });
+
+    expect(state.players[0].cards[0].remainingCooldown).toBe(0);
+
+    const useAccelerate: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:2" as CardInstanceId,
+    };
+
+    const result = engine.executeAction(state, useAccelerate, definition);
+
+    expect(result.state.players[0].cards[0].remainingCooldown).toBe(0);
+  });
+
+  it("does not mutate prior state", () => {
+    const definition = {
+      players: [
+        {
+          player: playerOne,
+          loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, ACCELERATE_ID] },
+        },
+        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      ],
+      cardDefinitions: new Map([
+        [BASIC_STRIKE_ID, BasicStrike],
+        [ACCELERATE_ID, Accelerate],
+      ]),
+    };
+
+    const engine = createEngine();
+    const state = createGame({ matchId: "match-1" as MatchId, definition });
+
+    const useStrike: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:1" as CardInstanceId,
+    };
+
+    const state2 = engine.executeAction(state, useStrike, definition).state;
+
+    const useAccelerate: UseCardAction = {
+      type: ActionType.UseCard,
+      actorId: playerOne.id,
+      cardInstanceId: "player-1:2" as CardInstanceId,
+    };
+
+    engine.executeAction(state2, useAccelerate, definition);
+
+    expect(state2.players[0].cards[0].remainingCooldown).toBe(1);
   });
 });
