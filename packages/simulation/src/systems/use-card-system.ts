@@ -1,4 +1,5 @@
 import { ActionType } from "../actions";
+import { IllegalActionError } from "../errors";
 import type { ExecutionContext } from "../engine/execution-context";
 
 import type { GameSystem } from "./game-system";
@@ -11,17 +12,49 @@ export class UseCardSystem implements GameSystem {
       return;
     }
 
-    const playerIndex = context.state.players.findIndex(
+    const { state } = context;
+
+    if (action.actorId !== state.turn.activePlayerId) {
+      throw IllegalActionError.notActivePlayer();
+    }
+
+    let cardExists = false;
+    let cardOwned = false;
+
+    for (const ps of state.players) {
+      const found = ps.cards.some(
+        (c) => c.instanceId === action.cardInstanceId,
+      );
+      if (found) {
+        cardExists = true;
+        cardOwned = ps.player.id === action.actorId;
+        break;
+      }
+    }
+
+    if (!cardExists) {
+      throw IllegalActionError.cardNotFound();
+    }
+
+    if (!cardOwned) {
+      throw IllegalActionError.cardNotOwned();
+    }
+
+    const playerIndex = state.players.findIndex(
       (ps) => ps.player.id === action.actorId,
     );
 
-    const playerState = context.state.players[playerIndex];
+    const playerState = state.players[playerIndex];
 
     const cardIndex = playerState.cards.findIndex(
       (c) => c.instanceId === action.cardInstanceId,
     );
 
     const card = playerState.cards[cardIndex];
+
+    if (card.remainingCooldown > 0) {
+      throw IllegalActionError.cardOnCooldown();
+    }
 
     const cardDefinition = context.definition.cardDefinitions.get(
       card.definitionId,
@@ -34,14 +67,11 @@ export class UseCardSystem implements GameSystem {
     ];
 
     const updatedPlayers = [
-      ...context.state.players.slice(0, playerIndex),
+      ...state.players.slice(0, playerIndex),
       { ...playerState, cards: updatedCards },
-      ...context.state.players.slice(playerIndex + 1),
+      ...state.players.slice(playerIndex + 1),
     ];
 
-    context.replaceState({
-      ...context.state,
-      players: updatedPlayers,
-    });
+    context.replaceState({ ...state, players: updatedPlayers });
   }
 }
