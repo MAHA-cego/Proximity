@@ -14,6 +14,14 @@ describe("AbilityTrigger", () => {
   it("has OnUse value", () => {
     expect(AbilityTrigger.OnUse).toBe("ON_USE");
   });
+
+  it("has OnTurnStart value", () => {
+    expect(AbilityTrigger.OnTurnStart).toBe("ON_TURN_START");
+  });
+
+  it("has Passive value", () => {
+    expect(AbilityTrigger.Passive).toBe("PASSIVE");
+  });
 });
 
 describe("TargetingType", () => {
@@ -33,6 +41,10 @@ describe("TargetingType", () => {
 describe("EffectType", () => {
   it("has Damage value", () => {
     expect(EffectType.Damage).toBe("DAMAGE");
+  });
+
+  it("has Heal value", () => {
+    expect(EffectType.Heal).toBe("HEAL");
   });
 });
 

@@ -1,4 +1,6 @@
 import { ActionType } from "../actions";
+import { AbilityTrigger } from "../core";
+import { dispatchTrigger } from "../effects";
 import type { ExecutionContext } from "../engine/execution-context";
 
 import type { GameSystem } from "./game-system";
@@ -32,5 +34,19 @@ export class CooldownSystem implements GameSystem {
       ...context.state,
       players: updatedPlayers,
     });
+
+    const updatedPlayerState = context.state.players[playerIndex];
+
+    for (const card of updatedPlayerState.cards) {
+      const cardDefinition = context.definition.cardDefinitions.get(
+        card.definitionId,
+      )!;
+
+      dispatchTrigger(
+        context,
+        AbilityTrigger.OnTurnStart,
+        cardDefinition.abilities,
+      );
+    }
   }
 }
