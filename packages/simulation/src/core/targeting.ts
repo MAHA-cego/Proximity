@@ -8,4 +8,5 @@ export type Targeting =
   | {
       readonly type: TargetingType.Card;
       readonly cardDefinitionId: CardDefinitionId;
-    };
+    }
+  | { readonly type: TargetingType.AllEnemies };
