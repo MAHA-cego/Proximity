@@ -6,6 +6,7 @@ import {
   createEngine,
   createGame,
   IllegalActionError,
+  InvalidActionError,
   TargetingType,
   Team,
   type CardDefinition,
@@ -153,7 +154,7 @@ describe("UseCardSystem", () => {
     const engine = createEngine();
 
     expect(() => engine.executeAction(state, action, definition)).toThrow(
-      IllegalActionError,
+      InvalidActionError,
     );
   });
 
@@ -201,7 +202,7 @@ describe("UseCardSystem", () => {
     const engine = createEngine();
 
     expect(() => engine.executeAction(state, action, definition)).toThrow(
-      IllegalActionError,
+      InvalidActionError,
     );
   });
 
@@ -256,6 +257,6 @@ describe("UseCardSystem", () => {
 
     expect(() =>
       engine.executeAction(stateAfterUse, action, definition),
-    ).toThrow(IllegalActionError);
+    ).toThrow(InvalidActionError);
   });
 });

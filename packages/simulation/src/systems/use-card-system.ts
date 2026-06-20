@@ -1,14 +1,6 @@
 import { ActionType } from "../actions";
-import {
-  AbilityTrigger,
-  Comparison,
-  RequirementSubject,
-  RequirementType,
-  type AbilityRequirement,
-  type PlayerId,
-} from "../core";
+import { AbilityTrigger } from "../core";
 import { dispatchTrigger } from "../effects";
-import { IllegalActionError } from "../errors";
 import type { ExecutionContext } from "../engine/execution-context";
 
 import type { GameSystem } from "./game-system";
@@ -23,32 +15,6 @@ export class UseCardSystem implements GameSystem {
 
     const { state } = context;
 
-    if (action.actorId !== state.turn.activePlayerId) {
-      throw IllegalActionError.notActivePlayer();
-    }
-
-    let cardExists = false;
-    let cardOwned = false;
-
-    for (const ps of state.players) {
-      const found = ps.cards.some(
-        (c) => c.instanceId === action.cardInstanceId,
-      );
-      if (found) {
-        cardExists = true;
-        cardOwned = ps.player.id === action.actorId;
-        break;
-      }
-    }
-
-    if (!cardExists) {
-      throw IllegalActionError.cardNotFound();
-    }
-
-    if (!cardOwned) {
-      throw IllegalActionError.cardNotOwned();
-    }
-
     const playerIndex = state.players.findIndex(
       (ps) => ps.player.id === action.actorId,
     );
@@ -61,22 +27,9 @@ export class UseCardSystem implements GameSystem {
 
     const card = playerState.cards[cardIndex];
 
-    if (card.remainingCooldown > 0) {
-      throw IllegalActionError.cardOnCooldown();
-    }
-
     const cardDefinition = context.definition.cardDefinitions.get(
       card.definitionId,
     )!;
-
-    for (const ability of cardDefinition.abilities) {
-      if (ability.trigger !== AbilityTrigger.OnUse) continue;
-      for (const req of ability.requirements ?? []) {
-        if (!checkRequirement(context, req, action.actorId)) {
-          throw IllegalActionError.requirementNotMet();
-        }
-      }
-    }
 
     const updatedCards = [
       ...playerState.cards.slice(0, cardIndex),
@@ -93,28 +46,5 @@ export class UseCardSystem implements GameSystem {
     context.replaceState({ ...state, players: updatedPlayers });
 
     dispatchTrigger(context, AbilityTrigger.OnUse, cardDefinition.abilities);
-  }
-}
-
-function checkRequirement(
-  context: ExecutionContext,
-  req: AbilityRequirement,
-  actorId: PlayerId,
-): boolean {
-  switch (req.type) {
-    case RequirementType.Health: {
-      const resolvedId =
-        req.subject === RequirementSubject.Enemy
-          ? context.state.players.find((ps) => ps.player.id !== actorId)?.player
-              .id
-          : actorId;
-      const subjectState = context.state.players.find(
-        (ps) => ps.player.id === resolvedId,
-      );
-      if (!subjectState) return false;
-      if (req.comparison === Comparison.Below)
-        return subjectState.health < req.threshold;
-      return subjectState.health > req.threshold;
-    }
   }
 }

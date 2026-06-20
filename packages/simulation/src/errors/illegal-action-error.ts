@@ -11,24 +11,6 @@ export class IllegalActionError extends SimulationError {
     return new IllegalActionError("Cannot end the turn of a completed match.");
   }
 
-  public static cardNotFound(): IllegalActionError {
-    return new IllegalActionError("The referenced card does not exist.");
-  }
-
-  public static cardNotOwned(): IllegalActionError {
-    return new IllegalActionError(
-      "The card is not owned by the acting player.",
-    );
-  }
-
-  public static cardOnCooldown(): IllegalActionError {
-    return new IllegalActionError("The card cannot be used while on cooldown.");
-  }
-
-  public static requirementNotMet(): IllegalActionError {
-    return new IllegalActionError("The ability requirement is not satisfied.");
-  }
-
   private constructor(message: string) {
     super(message);
   }
