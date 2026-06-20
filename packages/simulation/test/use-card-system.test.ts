@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AbilityTrigger,
   ActionType,
   createEngine,
   createGame,
   IllegalActionError,
+  TargetingType,
   Team,
   type CardDefinition,
   type CardDefinitionId,
@@ -20,6 +22,13 @@ describe("UseCardSystem", () => {
     const cardA: CardDefinition = {
       id: "card-a" as CardDefinitionId,
       cooldown: 3,
+      abilities: [
+        {
+          trigger: AbilityTrigger.OnUse,
+          targeting: { type: TargetingType.None },
+          effects: [],
+        },
+      ],
     };
 
     const playerOne: Player = {
@@ -66,6 +75,13 @@ describe("UseCardSystem", () => {
     const cardA: CardDefinition = {
       id: "card-a" as CardDefinitionId,
       cooldown: 2,
+      abilities: [
+        {
+          trigger: AbilityTrigger.OnUse,
+          targeting: { type: TargetingType.None },
+          effects: [],
+        },
+      ],
     };
 
     const playerOne: Player = {
@@ -139,6 +155,13 @@ describe("UseCardSystem", () => {
     const cardA: CardDefinition = {
       id: "card-a" as CardDefinitionId,
       cooldown: 2,
+      abilities: [
+        {
+          trigger: AbilityTrigger.OnUse,
+          targeting: { type: TargetingType.None },
+          effects: [],
+        },
+      ],
     };
 
     const playerOne: Player = {
@@ -178,6 +201,13 @@ describe("UseCardSystem", () => {
     const cardA: CardDefinition = {
       id: "card-a" as CardDefinitionId,
       cooldown: 3,
+      abilities: [
+        {
+          trigger: AbilityTrigger.OnUse,
+          targeting: { type: TargetingType.None },
+          effects: [],
+        },
+      ],
     };
 
     const playerOne: Player = {
