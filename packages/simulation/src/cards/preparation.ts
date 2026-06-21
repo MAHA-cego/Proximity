@@ -7,11 +7,11 @@ import {
   type CardDefinitionId,
 } from "../core";
 
-export const BATTLE_CRY_ID = "battle-cry" as CardDefinitionId;
+export const PREPARATION_ID = "preparation" as CardDefinitionId;
 
-export const BattleCry: CardDefinition = {
-  id: BATTLE_CRY_ID,
-  cooldown: 1,
+export const Preparation: CardDefinition = {
+  id: PREPARATION_ID,
+  cooldown: 4,
   abilities: [
     {
       trigger: AbilityTrigger.OnUse,
@@ -20,9 +20,9 @@ export const BattleCry: CardDefinition = {
         {
           type: EffectType.ApplyModifier,
           modifierType: ModifierType.Damage,
-          amount: 8,
+          amount: 15,
           uses: 1,
-          duration: 3,
+          duration: 2,
         },
       ],
     },

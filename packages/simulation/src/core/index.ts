@@ -1,4 +1,6 @@
 export * from "./ability-requirement";
+export * from "./card-used-requirement";
+export * from "./status-requirement";
 export * from "./combatant-control-type";
 export * from "./apply-modifier-effect";
 export * from "./apply-status-effect";
@@ -27,6 +29,7 @@ export * from "./player-loadout";
 export * from "./extend-cooldown-effect";
 export * from "./reduce-cooldown-effect";
 export * from "./refresh-cooldown-effect";
+export * from "./remove-status-effect";
 export * from "./requirement-subject";
 export * from "./requirement-type";
 export * from "./targeting";

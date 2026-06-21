@@ -1,5 +1,6 @@
 import { ActionType } from "../actions";
-import { StatusType } from "../core";
+import { AbilityTrigger, StatusType, TargetingType } from "../core";
+import { resolveEffects } from "../effects";
 import type { ExecutionContext } from "../engine/execution-context";
 
 import type { GameSystem } from "./game-system";
@@ -18,6 +19,21 @@ export class StatusSystem implements GameSystem {
 
     for (const status of combatantState.statuses) {
       switch (status.type) {
+        case StatusType.Berserk:
+          break;
+
+        case StatusType.Bleeding: {
+          const { state } = context;
+          const target = state.combatants[combatantIndex];
+          const updatedCombatants = [
+            ...state.combatants.slice(0, combatantIndex),
+            { ...target, health: target.health - status.amount },
+            ...state.combatants.slice(combatantIndex + 1),
+          ];
+          context.replaceState({ ...state, combatants: updatedCombatants });
+          break;
+        }
+
         case StatusType.Burn: {
           const { state } = context;
           const target = state.combatants[combatantIndex];
@@ -29,6 +45,18 @@ export class StatusSystem implements GameSystem {
           context.replaceState({ ...state, combatants: updatedCombatants });
           break;
         }
+
+        case StatusType.Exhausted:
+          break;
+
+        case StatusType.FeintActive:
+          break;
+
+        case StatusType.Opening:
+          break;
+
+        case StatusType.Parry:
+          break;
 
         case StatusType.Regeneration: {
           const { state } = context;
@@ -54,6 +82,14 @@ export class StatusSystem implements GameSystem {
       }
     }
 
+    // Collect onExpiry effects from statuses about to expire before removing them.
+    // Must fire AFTER decrement so the newly applied statuses aren't immediately swept.
+    const { state: stateAfterEffects } = context;
+    const combatantAfterEffects = stateAfterEffects.combatants[combatantIndex];
+    const expiryEffects = combatantAfterEffects.statuses
+      .filter((s) => s.remainingDuration === 1 && s.onExpiry?.length)
+      .flatMap((s) => s.onExpiry!);
+
     const { state } = context;
     const latestCombatant = state.combatants[combatantIndex];
     const updatedStatuses = latestCombatant.statuses
@@ -65,5 +101,17 @@ export class StatusSystem implements GameSystem {
       ...state.combatants.slice(combatantIndex + 1),
     ];
     context.replaceState({ ...state, combatants: updatedCombatants });
+
+    if (expiryEffects.length > 0) {
+      resolveEffects(
+        context,
+        {
+          trigger: AbilityTrigger.Passive,
+          targeting: { type: TargetingType.Self },
+          effects: expiryEffects,
+        },
+        activeCombatantId,
+      );
+    }
   }
 }

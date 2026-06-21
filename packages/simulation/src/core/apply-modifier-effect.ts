@@ -5,5 +5,6 @@ export interface ApplyModifierEffect {
   readonly type: EffectType.ApplyModifier;
   readonly modifierType: ModifierType;
   readonly amount: number;
-  readonly uses: number;
+  readonly uses?: number;
+  readonly duration?: number;
 }

@@ -108,5 +108,12 @@ export class Engine {
         }
       }
     }
+
+    for (const status of combatantState.statuses) {
+      if (status.preventsCardPlay) throw InvalidActionError.requirementNotMet();
+      if (status.restrictedCardIds?.includes(card.definitionId)) {
+        throw InvalidActionError.requirementNotMet();
+      }
+    }
   }
 }

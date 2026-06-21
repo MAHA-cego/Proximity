@@ -829,7 +829,7 @@ describe("Status interactions", () => {
       definition,
     );
 
-    expect(result.state.combatants[1].health).toBe(17);
+    expect(result.state.combatants[1].health).toBe(14);
   });
 
   it("OnTurnStart damage is reduced by target Shield", () => {

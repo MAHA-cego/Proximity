@@ -16,4 +16,6 @@ export enum EffectType {
   Group = "GROUP",
 
   ApplyStatus = "APPLY_STATUS",
+
+  RemoveStatus = "REMOVE_STATUS",
 }

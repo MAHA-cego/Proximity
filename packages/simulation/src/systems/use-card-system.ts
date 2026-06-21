@@ -46,5 +46,23 @@ export class UseCardSystem implements GameSystem {
     context.replaceState({ ...state, combatants: updatedCombatants });
 
     dispatchTrigger(context, AbilityTrigger.OnUse, cardDefinition.abilities);
+
+    const playedCardDefinitionId = cardDefinition.id;
+    for (const otherCombatantState of context.state.combatants) {
+      if (otherCombatantState.combatant.id === action.actorId) continue;
+      for (const otherCard of otherCombatantState.cards) {
+        const otherCardDef = context.definition.cardDefinitions.get(
+          otherCard.definitionId,
+        );
+        if (!otherCardDef) continue;
+        dispatchTrigger(
+          context,
+          AbilityTrigger.OnOpponentCardUse,
+          otherCardDef.abilities,
+          otherCombatantState.combatant.id,
+          playedCardDefinitionId,
+        );
+      }
+    }
   }
 }

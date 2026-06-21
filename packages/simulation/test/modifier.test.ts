@@ -61,8 +61,9 @@ describe("BattleCry", () => {
     expect(result.state.combatants[0].modifiers).toHaveLength(1);
     expect(result.state.combatants[0].modifiers[0]).toStrictEqual({
       type: ModifierType.Damage,
-      amount: 5,
+      amount: 8,
       remainingUses: 1,
+      remainingDuration: 3,
     });
   });
 
@@ -200,7 +201,7 @@ describe("Damage modifier consumption", () => {
 
     const afterStrike = engine.executeAction(state, strikeAction, definition);
 
-    expect(afterStrike.state.combatants[1].health).toBe(12);
+    expect(afterStrike.state.combatants[1].health).toBe(9);
     expect(afterStrike.state.combatants[0].modifiers).toHaveLength(0);
   });
 
@@ -303,7 +304,7 @@ describe("Damage modifier consumption", () => {
       definition,
     );
 
-    expect(afterSecondStrike.state.combatants[1].health).toBe(9);
+    expect(afterSecondStrike.state.combatants[1].health).toBe(6);
   });
 });
 

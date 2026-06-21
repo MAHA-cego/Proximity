@@ -4,4 +4,6 @@ export enum AbilityTrigger {
   OnTurnStart = "ON_TURN_START",
 
   Passive = "PASSIVE",
+
+  OnOpponentCardUse = "ON_OPPONENT_CARD_USE",
 }

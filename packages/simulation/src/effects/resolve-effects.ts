@@ -4,6 +4,7 @@ import {
   StatusType,
   TargetingType,
   type CardAbility,
+  type CardDefinitionId,
   type CardEffect,
   type CombatantId,
   type RuntimeModifier,
@@ -16,8 +17,24 @@ export function resolveEffects(
   context: ExecutionContext,
   ability: CardAbility,
   actorId?: CombatantId,
+  triggeredByCardId?: CardDefinitionId,
 ): ExecutionContext {
   const resolvedActorId = actorId ?? context.action.actorId;
+
+  if (ability.requirements) {
+    for (const req of ability.requirements) {
+      if (
+        !checkRequirement(
+          context.state,
+          req,
+          resolvedActorId,
+          triggeredByCardId,
+        )
+      ) {
+        return context;
+      }
+    }
+  }
 
   let targetIndices: number[] = [];
   let cardTargetCombatantIndex = -1;
@@ -58,6 +75,7 @@ export function resolveEffects(
       targetIndices,
       cardTargetCombatantIndex,
       cardTargetCardIndex,
+      triggeredByCardId,
     );
   }
 
@@ -71,6 +89,7 @@ function dispatchEffect(
   targetIndices: number[],
   cardTargetCombatantIndex: number,
   cardTargetCardIndex: number,
+  triggeredByCardId?: CardDefinitionId,
 ): void {
   switch (effect.type) {
     case EffectType.Group: {
@@ -82,13 +101,22 @@ function dispatchEffect(
           targetIndices,
           cardTargetCombatantIndex,
           cardTargetCardIndex,
+          triggeredByCardId,
         );
       }
       break;
     }
 
     case EffectType.Conditional: {
-      if (!checkRequirement(context.state, effect.condition, actorId)) break;
+      if (
+        !checkRequirement(
+          context.state,
+          effect.condition,
+          actorId,
+          triggeredByCardId,
+        )
+      )
+        break;
       for (const sub of effect.effects) {
         dispatchEffect(
           context,
@@ -97,6 +125,7 @@ function dispatchEffect(
           targetIndices,
           cardTargetCombatantIndex,
           cardTargetCardIndex,
+          triggeredByCardId,
         );
       }
       break;
@@ -110,20 +139,27 @@ function dispatchEffect(
       const damageModifiers = actorState.modifiers.filter(
         (m) => m.type === ModifierType.Damage,
       );
+      const multiplierModifiers = actorState.modifiers.filter(
+        (m) => m.type === ModifierType.DamageMultiplier,
+      );
       const modifierBonus = damageModifiers.reduce(
         (sum, m) => sum + m.amount,
         0,
+      );
+      const multiplierBonus = multiplierModifiers.reduce(
+        (product, m) => product * m.amount,
+        1,
       );
 
       if (damageModifiers.length > 0) {
         const consumedModifiers = actorState.modifiers
           .map(
             (m): RuntimeModifier =>
-              m.type === ModifierType.Damage
+              m.type === ModifierType.Damage && m.remainingUses !== undefined
                 ? { ...m, remainingUses: m.remainingUses - 1 }
                 : m,
           )
-          .filter((m) => m.remainingUses > 0);
+          .filter((m) => m.remainingUses === undefined || m.remainingUses > 0);
         const updatedActor = { ...actorState, modifiers: consumedModifiers };
         const updatedCombatants = [
           ...context.state.combatants.slice(0, actorIdx),
@@ -136,11 +172,43 @@ function dispatchEffect(
         });
       }
 
-      const totalDamage = effect.amount + modifierBonus;
+      const totalDamage = (effect.amount + modifierBonus) * multiplierBonus;
 
       for (const targetIndex of targetIndices) {
         const { state } = context;
         const target = state.combatants[targetIndex];
+
+        const parryStatus = target.statuses.find(
+          (s) => s.type === StatusType.Parry,
+        );
+        if (parryStatus && totalDamage <= parryStatus.amount) {
+          const withoutParry = target.statuses.filter((s) => s !== parryStatus);
+          const afterParryConsume = [
+            ...state.combatants.slice(0, targetIndex),
+            { ...target, statuses: withoutParry },
+            ...state.combatants.slice(targetIndex + 1),
+          ];
+          context.replaceState({ ...state, combatants: afterParryConsume });
+
+          const reflectActorIdx = context.state.combatants.findIndex(
+            (cs) => cs.combatant.id === actorId,
+          );
+          if (reflectActorIdx !== -1) {
+            const { state: stateAfterParry } = context;
+            const attacker = stateAfterParry.combatants[reflectActorIdx];
+            const reflectedCombatants = [
+              ...stateAfterParry.combatants.slice(0, reflectActorIdx),
+              { ...attacker, health: attacker.health - totalDamage },
+              ...stateAfterParry.combatants.slice(reflectActorIdx + 1),
+            ];
+            context.replaceState({
+              ...stateAfterParry,
+              combatants: reflectedCombatants,
+            });
+          }
+          continue;
+        }
+
         const shieldStatus = target.statuses.find(
           (s) => s.type === StatusType.Shield,
         );
@@ -174,11 +242,11 @@ function dispatchEffect(
         const consumedModifiers = actorState.modifiers
           .map(
             (m): RuntimeModifier =>
-              m.type === ModifierType.Heal
+              m.type === ModifierType.Heal && m.remainingUses !== undefined
                 ? { ...m, remainingUses: m.remainingUses - 1 }
                 : m,
           )
-          .filter((m) => m.remainingUses > 0);
+          .filter((m) => m.remainingUses === undefined || m.remainingUses > 0);
         const updatedActor = { ...actorState, modifiers: consumedModifiers };
         const updatedCombatants = [
           ...context.state.combatants.slice(0, actorIdx),
@@ -293,7 +361,10 @@ function dispatchEffect(
         const newModifier: RuntimeModifier = {
           type: effect.modifierType,
           amount: effect.amount,
-          remainingUses: effect.uses,
+          ...(effect.uses !== undefined && { remainingUses: effect.uses }),
+          ...(effect.duration !== undefined && {
+            remainingDuration: effect.duration,
+          }),
         };
         const updatedCombatant = {
           ...target,
@@ -317,10 +388,35 @@ function dispatchEffect(
           type: effect.statusType,
           remainingDuration: effect.duration,
           amount: effect.amount,
+          ...(effect.restrictedCardIds && {
+            restrictedCardIds: effect.restrictedCardIds,
+          }),
+          ...(effect.preventsCardPlay && {
+            preventsCardPlay: effect.preventsCardPlay,
+          }),
+          ...(effect.onExpiry && { onExpiry: effect.onExpiry }),
         };
         const updatedCombatant = {
           ...target,
           statuses: [...target.statuses, newStatus],
+        };
+        const updatedCombatants = [
+          ...state.combatants.slice(0, targetIndex),
+          updatedCombatant,
+          ...state.combatants.slice(targetIndex + 1),
+        ];
+        context.replaceState({ ...state, combatants: updatedCombatants });
+      }
+      break;
+    }
+
+    case EffectType.RemoveStatus: {
+      for (const targetIndex of targetIndices) {
+        const { state } = context;
+        const target = state.combatants[targetIndex];
+        const updatedCombatant = {
+          ...target,
+          statuses: target.statuses.filter((s) => s.type !== effect.statusType),
         };
         const updatedCombatants = [
           ...state.combatants.slice(0, targetIndex),

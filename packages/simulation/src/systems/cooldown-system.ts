@@ -24,9 +24,19 @@ export class CooldownSystem implements GameSystem {
       remainingCooldown: Math.max(0, card.remainingCooldown - 1),
     }));
 
+    const updatedModifiers = combatantState.modifiers
+      .map((m) =>
+        m.remainingDuration !== undefined
+          ? { ...m, remainingDuration: m.remainingDuration - 1 }
+          : m,
+      )
+      .filter(
+        (m) => m.remainingDuration === undefined || m.remainingDuration > 0,
+      );
+
     const updatedCombatants = [
       ...context.state.combatants.slice(0, combatantIndex),
-      { ...combatantState, cards: updatedCards },
+      { ...combatantState, cards: updatedCards, modifiers: updatedModifiers },
       ...context.state.combatants.slice(combatantIndex + 1),
     ];
 
