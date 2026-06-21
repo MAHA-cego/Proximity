@@ -3,6 +3,7 @@
   "references": [
     { "path": "./packages/protocol" },
     { "path": "./packages/simulation" },
+    { "path": "./packages/ai" },
     { "path": "./apps/web" }
   ]
 }
