@@ -9,3 +9,4 @@ export * from "./systems";
 export * from "./errors";
 export * from "./initialization";
 export * from "./queries";
+export * from "./encounters";
