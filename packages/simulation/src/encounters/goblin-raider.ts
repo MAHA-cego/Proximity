@@ -1,5 +1,6 @@
 import { BasicStrike, BASIC_STRIKE_ID } from "../cards";
 import {
+  CombatantControlType,
   Team,
   type CardDefinition,
   type CardDefinitionId,
@@ -15,6 +16,7 @@ export const GoblinRaider: CombatantDefinition = {
   id: GOBLIN_RAIDER_ID,
   team: Team.Two,
   maxHealth: 15,
+  controlType: CombatantControlType.AI,
 };
 
 export const GoblinRaiderLoadout: CombatantLoadout = {

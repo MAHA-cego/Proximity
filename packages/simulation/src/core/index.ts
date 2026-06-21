@@ -1,4 +1,5 @@
 export * from "./ability-requirement";
+export * from "./combatant-control-type";
 export * from "./apply-modifier-effect";
 export * from "./apply-status-effect";
 export * from "./ability-trigger";
