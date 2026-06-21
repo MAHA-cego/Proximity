@@ -1,5 +1,5 @@
 import type { CardDefinitionId } from "./ids";
 
-export interface PlayerLoadout {
+export interface CombatantLoadout {
   readonly cardDefinitionIds: readonly CardDefinitionId[];
 }

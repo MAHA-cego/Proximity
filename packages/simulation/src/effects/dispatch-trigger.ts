@@ -1,4 +1,8 @@
-import { type AbilityTrigger, type CardAbility, type PlayerId } from "../core";
+import {
+  type AbilityTrigger,
+  type CardAbility,
+  type CombatantId,
+} from "../core";
 import type { ExecutionContext } from "../engine";
 
 import { resolveEffects } from "./resolve-effects";
@@ -7,7 +11,7 @@ export function dispatchTrigger(
   context: ExecutionContext,
   trigger: AbilityTrigger,
   abilities: readonly CardAbility[],
-  actorId?: PlayerId,
+  actorId?: CombatantId,
 ): ExecutionContext {
   for (const ability of abilities) {
     if (ability.trigger === trigger) {

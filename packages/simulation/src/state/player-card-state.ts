@@ -1,6 +1,6 @@
 import type { CardDefinitionId, CardInstanceId } from "../core";
 
-export interface PlayerCardState {
+export interface CombatantCardState {
   readonly instanceId: CardInstanceId;
 
   readonly definitionId: CardDefinitionId;

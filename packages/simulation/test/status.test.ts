@@ -22,30 +22,30 @@ import {
   type CardInstanceId,
   type EndTurnAction,
   type MatchId,
-  type Player,
-  type PlayerId,
+  type CombatantDefinition,
+  type CombatantId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
 
-const playerTwo: Player = {
-  id: "player-2" as PlayerId,
+const playerTwo: CombatantDefinition = {
+  id: "player-2" as CombatantId,
   team: Team.Two,
   maxHealth: 20,
 };
 
-const endTurn = (actorId: PlayerId): EndTurnAction => ({
+const endTurn = (actorId: CombatantId): EndTurnAction => ({
   type: ActionType.EndTurn,
   actorId,
 });
 
 const useCard = (
-  actorId: PlayerId,
+  actorId: CombatantId,
   cardInstanceId: CardInstanceId,
 ): UseCardAction => ({
   type: ActionType.UseCard,
@@ -56,9 +56,9 @@ const useCard = (
 describe("Burn", () => {
   it("applies Burn status to the enemy", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IGNITE_ID, Ignite]]),
     };
@@ -70,8 +70,8 @@ describe("Burn", () => {
       definition,
     );
 
-    expect(result.state.players[1].statuses).toHaveLength(1);
-    expect(result.state.players[1].statuses[0]).toStrictEqual({
+    expect(result.state.combatants[1].statuses).toHaveLength(1);
+    expect(result.state.combatants[1].statuses[0]).toStrictEqual({
       type: StatusType.Burn,
       remainingDuration: 3,
       amount: 2,
@@ -80,9 +80,9 @@ describe("Burn", () => {
 
   it("deals damage at the start of the burned player's turn", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IGNITE_ID, Ignite]]),
     };
@@ -102,15 +102,15 @@ describe("Burn", () => {
       definition,
     ).state;
 
-    expect(state.players[1].health).toBe(18);
-    expect(state.players[1].statuses[0].remainingDuration).toBe(2);
+    expect(state.combatants[1].health).toBe(18);
+    expect(state.combatants[1].statuses[0].remainingDuration).toBe(2);
   });
 
   it("does not affect health before the burned player's turn", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IGNITE_ID, Ignite]]),
     };
@@ -124,14 +124,14 @@ describe("Burn", () => {
       definition,
     ).state;
 
-    expect(state.players[1].health).toBe(20);
+    expect(state.combatants[1].health).toBe(20);
   });
 
   it("does not tick when the non-burned player becomes active", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IGNITE_ID, Ignite]]),
     };
@@ -156,14 +156,14 @@ describe("Burn", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(20);
+    expect(state.combatants[0].health).toBe(20);
   });
 
   it("ticks three times and then expires", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IGNITE_ID, Ignite]]),
     };
@@ -203,15 +203,15 @@ describe("Burn", () => {
       definition,
     ).state;
 
-    expect(state.players[1].health).toBe(14);
-    expect(state.players[1].statuses).toHaveLength(0);
+    expect(state.combatants[1].health).toBe(14);
+    expect(state.combatants[1].statuses).toHaveLength(0);
   });
 
   it("does not mutate prior state", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IGNITE_ID, Ignite]]),
     };
@@ -227,19 +227,19 @@ describe("Burn", () => {
 
     engine.executeAction(afterIgnite, endTurn(playerOne.id), definition);
 
-    expect(afterIgnite.players[1].health).toBe(20);
+    expect(afterIgnite.combatants[1].health).toBe(20);
   });
 });
 
 describe("Regeneration", () => {
   it("applies Regeneration status to self", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [MENDING_TOUCH_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[MENDING_TOUCH_ID, MendingTouch]]),
     };
@@ -251,8 +251,8 @@ describe("Regeneration", () => {
       definition,
     );
 
-    expect(result.state.players[0].statuses).toHaveLength(1);
-    expect(result.state.players[0].statuses[0]).toStrictEqual({
+    expect(result.state.combatants[0].statuses).toHaveLength(1);
+    expect(result.state.combatants[0].statuses[0]).toStrictEqual({
       type: StatusType.Regeneration,
       remainingDuration: 2,
       amount: 3,
@@ -273,12 +273,12 @@ describe("Regeneration", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [selfDamage.id, MENDING_TOUCH_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [selfDamage.id, selfDamage],
@@ -301,7 +301,7 @@ describe("Regeneration", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(10);
+    expect(state.combatants[0].health).toBe(10);
 
     state = engine.executeAction(
       state,
@@ -314,8 +314,8 @@ describe("Regeneration", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(13);
-    expect(state.players[0].statuses[0].remainingDuration).toBe(1);
+    expect(state.combatants[0].health).toBe(13);
+    expect(state.combatants[0].statuses[0].remainingDuration).toBe(1);
   });
 
   it("does not tick when a different player becomes active", () => {
@@ -332,12 +332,12 @@ describe("Regeneration", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [selfDamage.id, MENDING_TOUCH_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [selfDamage.id, selfDamage],
@@ -360,7 +360,7 @@ describe("Regeneration", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(15);
+    expect(state.combatants[0].health).toBe(15);
 
     state = engine.executeAction(
       state,
@@ -368,7 +368,7 @@ describe("Regeneration", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(15);
+    expect(state.combatants[0].health).toBe(15);
   });
 
   it("respects maxHealth when healing", () => {
@@ -385,12 +385,12 @@ describe("Regeneration", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [selfDamage.id, MENDING_TOUCH_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [selfDamage.id, selfDamage],
@@ -413,7 +413,7 @@ describe("Regeneration", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(18);
+    expect(state.combatants[0].health).toBe(18);
 
     state = engine.executeAction(
       state,
@@ -426,7 +426,7 @@ describe("Regeneration", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(20);
+    expect(state.combatants[0].health).toBe(20);
 
     state = engine.executeAction(
       state,
@@ -439,17 +439,20 @@ describe("Regeneration", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(20);
-    expect(state.players[0].statuses).toHaveLength(0);
+    expect(state.combatants[0].health).toBe(20);
+    expect(state.combatants[0].statuses).toHaveLength(0);
   });
 });
 
 describe("Shield", () => {
   it("applies Shield status to self", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IRON_WILL_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [IRON_WILL_ID] },
+        },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IRON_WILL_ID, IronWill]]),
     };
@@ -461,8 +464,8 @@ describe("Shield", () => {
       definition,
     );
 
-    expect(result.state.players[0].statuses).toHaveLength(1);
-    expect(result.state.players[0].statuses[0]).toStrictEqual({
+    expect(result.state.combatants[0].statuses).toHaveLength(1);
+    expect(result.state.combatants[0].statuses[0]).toStrictEqual({
       type: StatusType.Shield,
       remainingDuration: 2,
       amount: 5,
@@ -483,9 +486,15 @@ describe("Shield", () => {
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IRON_WILL_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [attackCard.id] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [IRON_WILL_ID] },
+        },
+        {
+          combatant: playerTwo,
+          loadout: { cardDefinitionIds: [attackCard.id] },
+        },
       ],
       cardDefinitions: new Map([
         [IRON_WILL_ID, IronWill],
@@ -514,7 +523,7 @@ describe("Shield", () => {
       definition,
     );
 
-    expect(result.state.players[0].health).toBe(17);
+    expect(result.state.combatants[0].health).toBe(17);
   });
 
   it("absorbs damage fully when damage is less than or equal to shield amount", () => {
@@ -531,9 +540,15 @@ describe("Shield", () => {
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IRON_WILL_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [weakAttack.id] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [IRON_WILL_ID] },
+        },
+        {
+          combatant: playerTwo,
+          loadout: { cardDefinitionIds: [weakAttack.id] },
+        },
       ],
       cardDefinitions: new Map([
         [IRON_WILL_ID, IronWill],
@@ -562,14 +577,17 @@ describe("Shield", () => {
       definition,
     );
 
-    expect(result.state.players[0].health).toBe(20);
+    expect(result.state.combatants[0].health).toBe(20);
   });
 
   it("duration decrements at start of shielded player's turn", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IRON_WILL_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [IRON_WILL_ID] },
+        },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IRON_WILL_ID, IronWill]]),
     };
@@ -594,7 +612,7 @@ describe("Shield", () => {
       definition,
     ).state;
 
-    expect(state.players[0].statuses[0].remainingDuration).toBe(1);
+    expect(state.combatants[0].statuses[0].remainingDuration).toBe(1);
   });
 
   it("no longer reduces damage after expiry", () => {
@@ -630,12 +648,15 @@ describe("Shield", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [shortShield.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [attackCard.id] } },
+        {
+          combatant: playerTwo,
+          loadout: { cardDefinitionIds: [attackCard.id] },
+        },
       ],
       cardDefinitions: new Map([
         [shortShield.id, shortShield],
@@ -663,7 +684,7 @@ describe("Shield", () => {
       definition,
     ).state;
 
-    expect(state.players[0].statuses).toHaveLength(0);
+    expect(state.combatants[0].statuses).toHaveLength(0);
 
     state = engine.executeAction(
       state,
@@ -677,7 +698,7 @@ describe("Shield", () => {
       definition,
     );
 
-    expect(result.state.players[0].health).toBe(12);
+    expect(result.state.combatants[0].health).toBe(12);
   });
 });
 
@@ -709,9 +730,12 @@ describe("Status interactions", () => {
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [applyBoth.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [applyBoth.id] },
+        },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[applyBoth.id, applyBoth]]),
     };
@@ -725,7 +749,7 @@ describe("Status interactions", () => {
       definition,
     ).state;
 
-    expect(state.players[0].statuses).toHaveLength(2);
+    expect(state.combatants[0].statuses).toHaveLength(2);
 
     state = engine.executeAction(
       state,
@@ -738,7 +762,7 @@ describe("Status interactions", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(17);
+    expect(state.combatants[0].health).toBe(17);
   });
 
   it("Shield reduces damage amplified by attacker's damage modifier", () => {
@@ -755,13 +779,13 @@ describe("Status interactions", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BATTLE_CRY_ID, strikeCard.id] },
         },
         {
-          player: playerTwo,
+          combatant: playerTwo,
           loadout: { cardDefinitionIds: [IRON_WILL_ID] },
         },
       ],
@@ -805,7 +829,7 @@ describe("Status interactions", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(17);
+    expect(result.state.combatants[1].health).toBe(17);
   });
 
   it("OnTurnStart damage is reduced by target Shield", () => {
@@ -822,13 +846,13 @@ describe("Status interactions", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [onTurnStartCard.id] },
         },
         {
-          player: playerTwo,
+          combatant: playerTwo,
           loadout: { cardDefinitionIds: [IRON_WILL_ID] },
         },
       ],
@@ -859,16 +883,16 @@ describe("Status interactions", () => {
       definition,
     ).state;
 
-    expect(state.players[1].health).toBe(20);
+    expect(state.combatants[1].health).toBe(20);
   });
 });
 
 describe("Determinism", () => {
   it("produces the same result from the same state", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [IGNITE_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[IGNITE_ID, Ignite]]),
     };
@@ -900,9 +924,9 @@ describe("Determinism", () => {
       definition,
     ).state;
 
-    expect(stateA.players[1].health).toBe(stateB.players[1].health);
-    expect(stateA.players[1].statuses).toStrictEqual(
-      stateB.players[1].statuses,
+    expect(stateA.combatants[1].health).toBe(stateB.combatants[1].health);
+    expect(stateA.combatants[1].statuses).toStrictEqual(
+      stateB.combatants[1].statuses,
     );
   });
 });

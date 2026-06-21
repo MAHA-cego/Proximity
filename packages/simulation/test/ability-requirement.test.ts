@@ -13,28 +13,28 @@ import {
   type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
 function makeSetup(actorMaxHealth: number, card: CardDefinition) {
-  const playerOne: Player = {
-    id: "player-1" as PlayerId,
+  const playerOne: CombatantDefinition = {
+    id: "player-1" as CombatantId,
     team: Team.One,
     maxHealth: actorMaxHealth,
   };
-  const playerTwo: Player = {
-    id: "player-2" as PlayerId,
+  const playerTwo: CombatantDefinition = {
+    id: "player-2" as CombatantId,
     team: Team.Two,
     maxHealth: 20,
   };
 
   const definition = {
-    players: [
-      { player: playerOne, loadout: { cardDefinitionIds: [card.id] } },
-      { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+    combatants: [
+      { combatant: playerOne, loadout: { cardDefinitionIds: [card.id] } },
+      { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
     ],
     cardDefinitions: new Map([[card.id, card]]),
   };
@@ -73,7 +73,7 @@ describe("HealthRequirement (Below)", () => {
   it("executes when actor health is below threshold", () => {
     const { state, action, definition } = makeSetup(8, card);
     const result = createEngine().executeAction(state, action, definition);
-    expect(result.state.players[1].health).toBe(17);
+    expect(result.state.combatants[1].health).toBe(17);
   });
 
   it("is blocked when actor health equals threshold", () => {
@@ -114,7 +114,7 @@ describe("HealthRequirement (Above)", () => {
   it("executes when actor health is above threshold", () => {
     const { state, action, definition } = makeSetup(15, card);
     const result = createEngine().executeAction(state, action, definition);
-    expect(result.state.players[1].health).toBe(17);
+    expect(result.state.combatants[1].health).toBe(17);
   });
 
   it("is blocked when actor health equals threshold", () => {
@@ -160,7 +160,7 @@ describe("Requirement Composition", () => {
 
     const { state, action, definition } = makeSetup(10, card);
     const result = createEngine().executeAction(state, action, definition);
-    expect(result.state.players[1].health).toBe(17);
+    expect(result.state.combatants[1].health).toBe(17);
   });
 
   it("is blocked when first requirement fails", () => {

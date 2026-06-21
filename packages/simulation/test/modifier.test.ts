@@ -16,21 +16,21 @@ import {
   type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type EndTurnAction,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
 
-const playerTwo: Player = {
-  id: "player-2" as PlayerId,
+const playerTwo: CombatantDefinition = {
+  id: "player-2" as CombatantId,
   team: Team.Two,
   maxHealth: 20,
 };
@@ -38,9 +38,12 @@ const playerTwo: Player = {
 describe("BattleCry", () => {
   it("applies a damage modifier to the actor", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [BATTLE_CRY_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [BATTLE_CRY_ID] },
+        },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[BATTLE_CRY_ID, BattleCry]]),
     };
@@ -55,8 +58,8 @@ describe("BattleCry", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[0].modifiers).toHaveLength(1);
-    expect(result.state.players[0].modifiers[0]).toStrictEqual({
+    expect(result.state.combatants[0].modifiers).toHaveLength(1);
+    expect(result.state.combatants[0].modifiers[0]).toStrictEqual({
       type: ModifierType.Damage,
       amount: 5,
       remainingUses: 1,
@@ -65,9 +68,12 @@ describe("BattleCry", () => {
 
   it("does not affect the enemy's modifiers", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [BATTLE_CRY_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [BATTLE_CRY_ID] },
+        },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[BATTLE_CRY_ID, BattleCry]]),
     };
@@ -82,14 +88,17 @@ describe("BattleCry", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].modifiers).toHaveLength(0);
+    expect(result.state.combatants[1].modifiers).toHaveLength(0);
   });
 
   it("does not mutate prior state", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [BATTLE_CRY_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [BATTLE_CRY_ID] },
+        },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[BATTLE_CRY_ID, BattleCry]]),
     };
@@ -104,16 +113,16 @@ describe("BattleCry", () => {
 
     createEngine().executeAction(state, action, definition);
 
-    expect(state.players[0].modifiers).toHaveLength(0);
+    expect(state.combatants[0].modifiers).toHaveLength(0);
   });
 });
 
 describe("Enfeeble", () => {
   it("applies a negative heal modifier to the enemy", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [ENFEEBLE_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [ENFEEBLE_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[ENFEEBLE_ID, Enfeeble]]),
     };
@@ -128,8 +137,8 @@ describe("Enfeeble", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].modifiers).toHaveLength(1);
-    expect(result.state.players[1].modifiers[0]).toStrictEqual({
+    expect(result.state.combatants[1].modifiers).toHaveLength(1);
+    expect(result.state.combatants[1].modifiers[0]).toStrictEqual({
       type: ModifierType.Heal,
       amount: -3,
       remainingUses: 1,
@@ -152,12 +161,12 @@ describe("Damage modifier consumption", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BATTLE_CRY_ID, strikeCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BATTLE_CRY_ID, BattleCry],
@@ -181,7 +190,7 @@ describe("Damage modifier consumption", () => {
     );
     state = afterBattleCry.state;
 
-    expect(state.players[0].modifiers).toHaveLength(1);
+    expect(state.combatants[0].modifiers).toHaveLength(1);
 
     const strikeAction: UseCardAction = {
       type: ActionType.UseCard,
@@ -191,8 +200,8 @@ describe("Damage modifier consumption", () => {
 
     const afterStrike = engine.executeAction(state, strikeAction, definition);
 
-    expect(afterStrike.state.players[1].health).toBe(12);
-    expect(afterStrike.state.players[0].modifiers).toHaveLength(0);
+    expect(afterStrike.state.combatants[1].health).toBe(12);
+    expect(afterStrike.state.combatants[0].modifiers).toHaveLength(0);
   });
 
   it("damage without modifier applies base amount only", () => {
@@ -209,12 +218,12 @@ describe("Damage modifier consumption", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [strikeCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[strikeCard.id, strikeCard]]),
     };
@@ -229,7 +238,7 @@ describe("Damage modifier consumption", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(17);
+    expect(result.state.combatants[1].health).toBe(17);
   });
 
   it("modifier expires after one use", () => {
@@ -246,14 +255,14 @@ describe("Damage modifier consumption", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: {
             cardDefinitionIds: [BATTLE_CRY_ID, strikeCard.id, strikeCard.id],
           },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BATTLE_CRY_ID, BattleCry],
@@ -294,7 +303,7 @@ describe("Damage modifier consumption", () => {
       definition,
     );
 
-    expect(afterSecondStrike.state.players[1].health).toBe(9);
+    expect(afterSecondStrike.state.combatants[1].health).toBe(9);
   });
 });
 
@@ -325,15 +334,15 @@ describe("Heal modifier consumption", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: {
             cardDefinitionIds: [ENFEEBLE_ID, damageCard.id],
           },
         },
         {
-          player: playerTwo,
+          combatant: playerTwo,
           loadout: { cardDefinitionIds: [healCard.id] },
         },
       ],
@@ -367,8 +376,8 @@ describe("Heal modifier consumption", () => {
       definition,
     ).state;
 
-    expect(state.players[1].health).toBe(10);
-    expect(state.players[1].modifiers).toHaveLength(1);
+    expect(state.combatants[1].health).toBe(10);
+    expect(state.combatants[1].modifiers).toHaveLength(1);
 
     const endTurn: EndTurnAction = {
       type: ActionType.EndTurn,
@@ -386,8 +395,8 @@ describe("Heal modifier consumption", () => {
       definition,
     );
 
-    expect(afterHeal.state.players[1].health).toBe(12);
-    expect(afterHeal.state.players[1].modifiers).toHaveLength(0);
+    expect(afterHeal.state.combatants[1].health).toBe(12);
+    expect(afterHeal.state.combatants[1].modifiers).toHaveLength(0);
   });
 });
 
@@ -431,12 +440,12 @@ describe("Modifier stacking", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [twoModCard.id, strikeCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [twoModCard.id, twoModCard],
@@ -457,7 +466,7 @@ describe("Modifier stacking", () => {
       definition,
     ).state;
 
-    expect(state.players[0].modifiers).toHaveLength(2);
+    expect(state.combatants[0].modifiers).toHaveLength(2);
 
     const afterStrike = engine.executeAction(
       state,
@@ -469,15 +478,18 @@ describe("Modifier stacking", () => {
       definition,
     );
 
-    expect(afterStrike.state.players[1].health).toBe(11);
-    expect(afterStrike.state.players[0].modifiers).toHaveLength(0);
+    expect(afterStrike.state.combatants[1].health).toBe(11);
+    expect(afterStrike.state.combatants[0].modifiers).toHaveLength(0);
   });
 
   it("produces the same result from the same state (replay consistency)", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [BATTLE_CRY_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [BATTLE_CRY_ID] },
+        },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[BATTLE_CRY_ID, BattleCry]]),
     };
@@ -494,8 +506,8 @@ describe("Modifier stacking", () => {
     const resultA = engine.executeAction(state, action, definition);
     const resultB = engine.executeAction(state, action, definition);
 
-    expect(resultA.state.players[0].modifiers).toStrictEqual(
-      resultB.state.players[0].modifiers,
+    expect(resultA.state.combatants[0].modifiers).toStrictEqual(
+      resultB.state.combatants[0].modifiers,
     );
   });
 });

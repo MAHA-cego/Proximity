@@ -16,34 +16,34 @@ export class TurnSystem implements GameSystem {
       throw IllegalActionError.matchCompleted();
     }
 
-    if (context.action.actorId !== context.state.turn.activePlayerId) {
+    if (context.action.actorId !== context.state.turn.activeCombatantId) {
       throw IllegalActionError.notActivePlayer();
     }
 
-    const currentPlayerIndex = context.state.players.findIndex(
-      ({ player }) => player.id === context.state.turn.activePlayerId,
+    const currentCombatantIndex = context.state.combatants.findIndex(
+      ({ combatant }) => combatant.id === context.state.turn.activeCombatantId,
     );
 
-    if (currentPlayerIndex === -1) {
+    if (currentCombatantIndex === -1) {
       throw InvalidStateError.activePlayerMissing();
     }
 
-    const nextPlayerIndex =
-      (currentPlayerIndex + 1) % context.state.players.length;
+    const nextCombatantIndex =
+      (currentCombatantIndex + 1) % context.state.combatants.length;
 
-    const nextPlayer = context.state.players[nextPlayerIndex];
+    const nextCombatant = context.state.combatants[nextCombatantIndex];
 
     context.replaceState({
       ...context.state,
       turn: {
         number: context.state.turn.number + 1,
-        activePlayerId: nextPlayer.player.id,
+        activeCombatantId: nextCombatant.combatant.id,
       },
     });
 
     context.emit({
       type: EventType.TurnEnded,
-      playerId: context.action.actorId,
+      combatantId: context.action.actorId,
     });
   }
 }

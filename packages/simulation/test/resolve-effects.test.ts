@@ -11,9 +11,9 @@ import {
   type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
@@ -31,21 +31,21 @@ describe("resolveEffects", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -60,9 +60,9 @@ describe("resolveEffects", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(15);
-    expect(result.state.players[0].health).toBe(20);
-    expect(state.players[1].health).toBe(20);
+    expect(result.state.combatants[1].health).toBe(15);
+    expect(result.state.combatants[0].health).toBe(20);
+    expect(state.combatants[1].health).toBe(20);
   });
 
   it("applies DamageEffect to Self", () => {
@@ -78,21 +78,21 @@ describe("resolveEffects", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -107,9 +107,9 @@ describe("resolveEffects", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[0].health).toBe(17);
-    expect(result.state.players[1].health).toBe(20);
-    expect(state.players[0].health).toBe(20);
+    expect(result.state.combatants[0].health).toBe(17);
+    expect(result.state.combatants[1].health).toBe(20);
+    expect(state.combatants[0].health).toBe(20);
   });
 
   it("applies multiple effects in authored order", () => {
@@ -128,21 +128,21 @@ describe("resolveEffects", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -157,7 +157,7 @@ describe("resolveEffects", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(15);
+    expect(result.state.combatants[1].health).toBe(15);
   });
 
   it("applies HealEffect to increase health", () => {
@@ -176,21 +176,21 @@ describe("resolveEffects", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -205,7 +205,7 @@ describe("resolveEffects", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[0].health).toBe(18);
+    expect(result.state.combatants[0].health).toBe(18);
   });
 
   it("clamps HealEffect at maxHealth", () => {
@@ -224,21 +224,21 @@ describe("resolveEffects", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 10,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 10,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -253,7 +253,7 @@ describe("resolveEffects", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[0].health).toBe(10);
+    expect(result.state.combatants[0].health).toBe(10);
   });
 });
 
@@ -280,24 +280,24 @@ describe("ReduceCooldownEffect", () => {
       abilities: [],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [cardA.id, cardB.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [cardA.id, cardA],
@@ -315,7 +315,7 @@ describe("ReduceCooldownEffect", () => {
     };
     const state2 = engine.executeAction(state, useCardB, definition).state;
 
-    expect(state2.players[0].cards[1].remainingCooldown).toBe(2);
+    expect(state2.combatants[0].cards[1].remainingCooldown).toBe(2);
 
     const useCardA: UseCardAction = {
       type: ActionType.UseCard,
@@ -324,7 +324,7 @@ describe("ReduceCooldownEffect", () => {
     };
     const result = engine.executeAction(state2, useCardA, definition);
 
-    expect(result.state.players[0].cards[1].remainingCooldown).toBe(1);
+    expect(result.state.combatants[0].cards[1].remainingCooldown).toBe(1);
   });
 
   it("clamps ReduceCooldownEffect at zero", () => {
@@ -349,24 +349,24 @@ describe("ReduceCooldownEffect", () => {
       abilities: [],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [cardA.id, cardB.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [cardA.id, cardA],
@@ -391,7 +391,7 @@ describe("ReduceCooldownEffect", () => {
     };
     const result = engine.executeAction(state2, useCardA, definition);
 
-    expect(result.state.players[0].cards[1].remainingCooldown).toBe(0);
+    expect(result.state.combatants[0].cards[1].remainingCooldown).toBe(0);
   });
 });
 
@@ -418,24 +418,24 @@ describe("RefreshCooldownEffect", () => {
       abilities: [],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [cardA.id, cardB.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [cardA.id, cardA],
@@ -453,7 +453,7 @@ describe("RefreshCooldownEffect", () => {
     };
     const state2 = engine.executeAction(state, useCardB, definition).state;
 
-    expect(state2.players[0].cards[1].remainingCooldown).toBe(3);
+    expect(state2.combatants[0].cards[1].remainingCooldown).toBe(3);
 
     const useCardA: UseCardAction = {
       type: ActionType.UseCard,
@@ -462,7 +462,7 @@ describe("RefreshCooldownEffect", () => {
     };
     const result = engine.executeAction(state2, useCardA, definition);
 
-    expect(result.state.players[0].cards[1].remainingCooldown).toBe(0);
+    expect(result.state.combatants[0].cards[1].remainingCooldown).toBe(0);
   });
 });
 
@@ -483,21 +483,21 @@ describe("Multiple Effect Composition", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -514,6 +514,6 @@ describe("Multiple Effect Composition", () => {
 
     // Damage fires first (20 → 17), then Heal (17 → 18).
     // If Heal fired first, result would be clamped to 20 then Damage to 17.
-    expect(result.state.players[0].health).toBe(18);
+    expect(result.state.combatants[0].health).toBe(18);
   });
 });

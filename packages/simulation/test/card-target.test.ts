@@ -14,20 +14,20 @@ import {
   RECHARGE_ID,
   Team,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
 
-const playerTwo: Player = {
-  id: "player-2" as PlayerId,
+const playerTwo: CombatantDefinition = {
+  id: "player-2" as CombatantId,
   team: Team.Two,
   maxHealth: 20,
 };
@@ -35,12 +35,12 @@ const playerTwo: Player = {
 describe("Recharge", () => {
   it("resets Basic Strike cooldown to zero", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, RECHARGE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BASIC_STRIKE_ID, BasicStrike],
@@ -59,7 +59,7 @@ describe("Recharge", () => {
 
     const state2 = engine.executeAction(state, useStrike, definition).state;
 
-    expect(state2.players[0].cards[0].remainingCooldown).toBe(1);
+    expect(state2.combatants[0].cards[0].remainingCooldown).toBe(1);
 
     const useRecharge: UseCardAction = {
       type: ActionType.UseCard,
@@ -69,17 +69,17 @@ describe("Recharge", () => {
 
     const result = engine.executeAction(state2, useRecharge, definition);
 
-    expect(result.state.players[0].cards[0].remainingCooldown).toBe(0);
+    expect(result.state.combatants[0].cards[0].remainingCooldown).toBe(0);
   });
 
   it("does not affect player health", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, RECHARGE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BASIC_STRIKE_ID, BasicStrike],
@@ -106,20 +106,20 @@ describe("Recharge", () => {
 
     const result = engine.executeAction(state2, useRecharge, definition);
 
-    expect(result.state.players[0].health).toBe(20);
-    expect(result.state.players[1].health).toBe(14);
+    expect(result.state.combatants[0].health).toBe(20);
+    expect(result.state.combatants[1].health).toBe(14);
   });
 });
 
 describe("Overload", () => {
   it("increases Basic Strike cooldown by 2", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, OVERLOAD_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BASIC_STRIKE_ID, BasicStrike],
@@ -130,7 +130,7 @@ describe("Overload", () => {
     const engine = createEngine();
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    expect(state.players[0].cards[0].remainingCooldown).toBe(0);
+    expect(state.combatants[0].cards[0].remainingCooldown).toBe(0);
 
     const useOverload: UseCardAction = {
       type: ActionType.UseCard,
@@ -140,17 +140,17 @@ describe("Overload", () => {
 
     const result = engine.executeAction(state, useOverload, definition);
 
-    expect(result.state.players[0].cards[0].remainingCooldown).toBe(2);
+    expect(result.state.combatants[0].cards[0].remainingCooldown).toBe(2);
   });
 
   it("stacks with existing cooldown", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, OVERLOAD_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BASIC_STRIKE_ID, BasicStrike],
@@ -169,7 +169,7 @@ describe("Overload", () => {
 
     const state2 = engine.executeAction(state, useStrike, definition).state;
 
-    expect(state2.players[0].cards[0].remainingCooldown).toBe(1);
+    expect(state2.combatants[0].cards[0].remainingCooldown).toBe(1);
 
     const useOverload: UseCardAction = {
       type: ActionType.UseCard,
@@ -179,19 +179,19 @@ describe("Overload", () => {
 
     const result = engine.executeAction(state2, useOverload, definition);
 
-    expect(result.state.players[0].cards[0].remainingCooldown).toBe(3);
+    expect(result.state.combatants[0].cards[0].remainingCooldown).toBe(3);
   });
 });
 
 describe("Accelerate", () => {
   it("reduces Basic Strike cooldown by 1", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, ACCELERATE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BASIC_STRIKE_ID, BasicStrike],
@@ -210,7 +210,7 @@ describe("Accelerate", () => {
 
     const state2 = engine.executeAction(state, useStrike, definition).state;
 
-    expect(state2.players[0].cards[0].remainingCooldown).toBe(1);
+    expect(state2.combatants[0].cards[0].remainingCooldown).toBe(1);
 
     const useAccelerate: UseCardAction = {
       type: ActionType.UseCard,
@@ -220,17 +220,17 @@ describe("Accelerate", () => {
 
     const result = engine.executeAction(state2, useAccelerate, definition);
 
-    expect(result.state.players[0].cards[0].remainingCooldown).toBe(0);
+    expect(result.state.combatants[0].cards[0].remainingCooldown).toBe(0);
   });
 
   it("clamps at zero when cooldown is already zero", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, ACCELERATE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BASIC_STRIKE_ID, BasicStrike],
@@ -241,7 +241,7 @@ describe("Accelerate", () => {
     const engine = createEngine();
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    expect(state.players[0].cards[0].remainingCooldown).toBe(0);
+    expect(state.combatants[0].cards[0].remainingCooldown).toBe(0);
 
     const useAccelerate: UseCardAction = {
       type: ActionType.UseCard,
@@ -251,17 +251,17 @@ describe("Accelerate", () => {
 
     const result = engine.executeAction(state, useAccelerate, definition);
 
-    expect(result.state.players[0].cards[0].remainingCooldown).toBe(0);
+    expect(result.state.combatants[0].cards[0].remainingCooldown).toBe(0);
   });
 
   it("does not mutate prior state", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, ACCELERATE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BASIC_STRIKE_ID, BasicStrike],
@@ -288,6 +288,6 @@ describe("Accelerate", () => {
 
     engine.executeAction(state2, useAccelerate, definition);
 
-    expect(state2.players[0].cards[0].remainingCooldown).toBe(1);
+    expect(state2.combatants[0].cards[0].remainingCooldown).toBe(1);
   });
 });

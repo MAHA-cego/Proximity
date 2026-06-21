@@ -18,20 +18,20 @@ import {
   Team,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
 
-const playerTwo: Player = {
-  id: "player-2" as PlayerId,
+const playerTwo: CombatantDefinition = {
+  id: "player-2" as CombatantId,
   team: Team.Two,
   maxHealth: 20,
 };
@@ -39,12 +39,12 @@ const playerTwo: Player = {
 describe("Basic Strike", () => {
   it("deals 6 damage to the enemy", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[BASIC_STRIKE_ID, BasicStrike]]),
     };
@@ -59,18 +59,18 @@ describe("Basic Strike", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(14);
-    expect(result.state.players[0].health).toBe(20);
+    expect(result.state.combatants[1].health).toBe(14);
+    expect(result.state.combatants[0].health).toBe(20);
   });
 
   it("goes on cooldown after use", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[BASIC_STRIKE_ID, BasicStrike]]),
     };
@@ -85,7 +85,7 @@ describe("Basic Strike", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[0].cards[0].remainingCooldown).toBe(1);
+    expect(result.state.combatants[0].cards[0].remainingCooldown).toBe(1);
   });
 });
 
@@ -104,12 +104,12 @@ describe("First Aid", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [FIRST_AID_ID, setupCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [FIRST_AID_ID, FirstAid],
@@ -122,7 +122,7 @@ describe("First Aid", () => {
       definition,
     );
 
-    expect(state.players[0].health).toBe(8);
+    expect(state.combatants[0].health).toBe(8);
 
     const action: UseCardAction = {
       type: ActionType.UseCard,
@@ -132,8 +132,8 @@ describe("First Aid", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[0].health).toBe(16);
-    expect(result.state.players[1].health).toBe(20);
+    expect(result.state.combatants[0].health).toBe(16);
+    expect(result.state.combatants[1].health).toBe(20);
   });
 
   it("clamps heal at maxHealth", () => {
@@ -150,12 +150,12 @@ describe("First Aid", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [FIRST_AID_ID, setupCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [FIRST_AID_ID, FirstAid],
@@ -168,7 +168,7 @@ describe("First Aid", () => {
       definition,
     );
 
-    expect(state.players[0].health).toBe(17);
+    expect(state.combatants[0].health).toBe(17);
 
     const action: UseCardAction = {
       type: ActionType.UseCard,
@@ -178,19 +178,19 @@ describe("First Aid", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[0].health).toBe(20);
+    expect(result.state.combatants[0].health).toBe(20);
   });
 });
 
 describe("Second Wind", () => {
   it("resets Basic Strike cooldown to zero", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [BASIC_STRIKE_ID, SECOND_WIND_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [BASIC_STRIKE_ID, BasicStrike],
@@ -209,7 +209,7 @@ describe("Second Wind", () => {
 
     const state2 = engine.executeAction(state, useStrike, definition).state;
 
-    expect(state2.players[0].cards[0].remainingCooldown).toBe(1);
+    expect(state2.combatants[0].cards[0].remainingCooldown).toBe(1);
 
     const useSecondWind: UseCardAction = {
       type: ActionType.UseCard,
@@ -219,25 +219,25 @@ describe("Second Wind", () => {
 
     const result = engine.executeAction(state2, useSecondWind, definition);
 
-    expect(result.state.players[0].cards[0].remainingCooldown).toBe(0);
+    expect(result.state.combatants[0].cards[0].remainingCooldown).toBe(0);
   });
 });
 
 describe("Desperation", () => {
   it("deals 15 damage when actor health is below 10", () => {
-    const damagedPlayer: Player = {
-      id: "player-1" as PlayerId,
+    const damagedPlayer: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 8,
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: damagedPlayer,
+          combatant: damagedPlayer,
           loadout: { cardDefinitionIds: [DESPERATION_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[DESPERATION_ID, Desperation]]),
     };
@@ -252,14 +252,17 @@ describe("Desperation", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(5);
+    expect(result.state.combatants[1].health).toBe(5);
   });
 
   it("is blocked when actor health is 10 or above", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [DESPERATION_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        {
+          combatant: playerOne,
+          loadout: { cardDefinitionIds: [DESPERATION_ID] },
+        },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[DESPERATION_ID, Desperation]]),
     };

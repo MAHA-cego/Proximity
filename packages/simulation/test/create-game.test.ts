@@ -5,21 +5,21 @@ import {
   MatchStatus,
   Team,
   type CardDefinitionId,
+  type CombatantDefinition,
+  type CombatantId,
   type MatchId,
-  type Player,
-  type PlayerId,
 } from "../src";
 
 describe("createGame", () => {
   it("creates a valid initial game state", () => {
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 30,
     };
 
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 30,
     };
@@ -28,9 +28,9 @@ describe("createGame", () => {
       matchId: "match-1" as MatchId,
 
       definition: {
-        players: [
-          { player: playerOne, loadout: { cardDefinitionIds: [] } },
-          { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        combatants: [
+          { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+          { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
         ],
         cardDefinitions: new Map(),
       },
@@ -38,23 +38,23 @@ describe("createGame", () => {
 
     expect(state.metadata.id).toBe("match-1");
 
-    expect(state.players).toHaveLength(2);
+    expect(state.combatants).toHaveLength(2);
 
-    expect(state.players[0].player).toEqual(playerOne);
+    expect(state.combatants[0].combatant).toEqual(playerOne);
 
-    expect(state.players[0].cards).toEqual([]);
+    expect(state.combatants[0].cards).toEqual([]);
 
-    expect(state.players[1].player).toEqual(playerTwo);
+    expect(state.combatants[1].combatant).toEqual(playerTwo);
 
-    expect(state.players[1].cards).toEqual([]);
+    expect(state.combatants[1].cards).toEqual([]);
 
-    expect(state.players[0].health).toBe(30);
+    expect(state.combatants[0].health).toBe(30);
 
-    expect(state.players[1].health).toBe(30);
+    expect(state.combatants[1].health).toBe(30);
 
     expect(state.turn.number).toBe(1);
 
-    expect(state.turn.activePlayerId).toBe(playerOne.id);
+    expect(state.turn.activeCombatantId).toBe(playerOne.id);
 
     expect(state.status).toBe(MatchStatus.InProgress);
 
@@ -62,14 +62,14 @@ describe("createGame", () => {
   });
 
   it("initializes player cards from loadout", () => {
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
 
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
@@ -78,9 +78,9 @@ describe("createGame", () => {
       matchId: "match-1" as MatchId,
 
       definition: {
-        players: [
+        combatants: [
           {
-            player: playerOne,
+            combatant: playerOne,
             loadout: {
               cardDefinitionIds: [
                 "card-a" as CardDefinitionId,
@@ -89,7 +89,7 @@ describe("createGame", () => {
             },
           },
           {
-            player: playerTwo,
+            combatant: playerTwo,
             loadout: { cardDefinitionIds: [] },
           },
         ],
@@ -97,26 +97,26 @@ describe("createGame", () => {
       },
     });
 
-    expect(state.players[0].cards).toHaveLength(2);
+    expect(state.combatants[0].cards).toHaveLength(2);
 
-    expect(state.players[0].cards[0].instanceId).toBe("player-1:1");
+    expect(state.combatants[0].cards[0].instanceId).toBe("player-1:1");
 
-    expect(state.players[0].cards[0].definitionId).toBe("card-a");
+    expect(state.combatants[0].cards[0].definitionId).toBe("card-a");
 
-    expect(state.players[0].cards[0].remainingCooldown).toBe(0);
+    expect(state.combatants[0].cards[0].remainingCooldown).toBe(0);
 
-    expect(state.players[0].cards[1].instanceId).toBe("player-1:2");
+    expect(state.combatants[0].cards[1].instanceId).toBe("player-1:2");
 
-    expect(state.players[0].cards[1].definitionId).toBe("card-b");
+    expect(state.combatants[0].cards[1].definitionId).toBe("card-b");
 
-    expect(state.players[0].cards[1].remainingCooldown).toBe(0);
+    expect(state.combatants[0].cards[1].remainingCooldown).toBe(0);
 
-    expect(state.players[1].cards).toEqual([]);
+    expect(state.combatants[1].cards).toEqual([]);
   });
 
-  it("requires at least two players", () => {
-    const player: Player = {
-      id: "player-1" as PlayerId,
+  it("requires at least two combatants", () => {
+    const combatant: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
@@ -126,7 +126,7 @@ describe("createGame", () => {
         matchId: "match-1" as MatchId,
 
         definition: {
-          players: [{ player, loadout: { cardDefinitionIds: [] } }],
+          combatants: [{ combatant, loadout: { cardDefinitionIds: [] } }],
           cardDefinitions: new Map(),
         },
       }),

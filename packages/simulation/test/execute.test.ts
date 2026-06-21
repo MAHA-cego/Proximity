@@ -8,14 +8,14 @@ import {
   EXECUTE_ID,
   Team,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
@@ -28,16 +28,16 @@ const action: UseCardAction = {
 
 describe("Execute", () => {
   it("fires when enemy health is below threshold", () => {
-    const lowHealthEnemy: Player = {
-      id: "player-2" as PlayerId,
+    const lowHealthEnemy: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 4,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [EXECUTE_ID] } },
-        { player: lowHealthEnemy, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [EXECUTE_ID] } },
+        { combatant: lowHealthEnemy, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[EXECUTE_ID, Execute]]),
     };
@@ -46,20 +46,20 @@ describe("Execute", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(-16);
+    expect(result.state.combatants[1].health).toBe(-16);
   });
 
   it("is blocked when enemy health equals threshold", () => {
-    const enemyAtThreshold: Player = {
-      id: "player-2" as PlayerId,
+    const enemyAtThreshold: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 5,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [EXECUTE_ID] } },
-        { player: enemyAtThreshold, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [EXECUTE_ID] } },
+        { combatant: enemyAtThreshold, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[EXECUTE_ID, Execute]]),
     };
@@ -72,16 +72,16 @@ describe("Execute", () => {
   });
 
   it("is blocked when enemy health is above threshold", () => {
-    const healthyEnemy: Player = {
-      id: "player-2" as PlayerId,
+    const healthyEnemy: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [EXECUTE_ID] } },
-        { player: healthyEnemy, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [EXECUTE_ID] } },
+        { combatant: healthyEnemy, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[EXECUTE_ID, Execute]]),
     };
@@ -94,25 +94,25 @@ describe("Execute", () => {
   });
 
   it("evaluates enemy health independently of actor health", () => {
-    const lowHealthActor: Player = {
-      id: "player-1" as PlayerId,
+    const lowHealthActor: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 3,
     };
 
-    const healthyEnemy: Player = {
-      id: "player-2" as PlayerId,
+    const healthyEnemy: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: lowHealthActor,
+          combatant: lowHealthActor,
           loadout: { cardDefinitionIds: [EXECUTE_ID] },
         },
-        { player: healthyEnemy, loadout: { cardDefinitionIds: [] } },
+        { combatant: healthyEnemy, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[EXECUTE_ID, Execute]]),
     };

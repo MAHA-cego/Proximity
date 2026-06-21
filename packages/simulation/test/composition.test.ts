@@ -22,19 +22,19 @@ import {
   type CardDefinitionId,
   type CardInstanceId,
   type MatchId,
-  type Player,
-  type PlayerId,
+  type CombatantDefinition,
+  type CombatantId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
 
-const playerTwo: Player = {
-  id: "player-2" as PlayerId,
+const playerTwo: CombatantDefinition = {
+  id: "player-2" as CombatantId,
   team: Team.Two,
   maxHealth: 20,
 };
@@ -66,12 +66,12 @@ const enemyDamage = (amount: number): CardDefinition => ({
 describe("ConditionalEffect", () => {
   it("skips conditional effects when condition is not met", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [PREDATORY_STRIKE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[PREDATORY_STRIKE_ID, PredatoryStrike]]),
     };
@@ -88,19 +88,19 @@ describe("ConditionalEffect", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(15);
+    expect(result.state.combatants[1].health).toBe(15);
   });
 
   it("executes conditional effects when condition is met", () => {
     const setup = enemyDamage(15);
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [setup.id, PREDATORY_STRIKE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [setup.id, setup],
@@ -121,7 +121,7 @@ describe("ConditionalEffect", () => {
       definition,
     ).state;
 
-    expect(state.players[1].health).toBe(5);
+    expect(state.combatants[1].health).toBe(5);
 
     const result = engine.executeAction(
       state,
@@ -133,7 +133,7 @@ describe("ConditionalEffect", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(-10);
+    expect(result.state.combatants[1].health).toBe(-10);
   });
 
   it("condition is evaluated against state after preceding effects in the same ability", () => {
@@ -162,12 +162,12 @@ describe("ConditionalEffect", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [thresholdCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[thresholdCard.id, thresholdCard]]),
     };
@@ -184,7 +184,7 @@ describe("ConditionalEffect", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(5);
+    expect(result.state.combatants[1].health).toBe(5);
   });
 });
 
@@ -193,12 +193,12 @@ describe("WarlordsResolve — conditional self-heal", () => {
     const setup = selfDamage(5);
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [setup.id, WARLORDS_RESOLVE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [setup.id, setup],
@@ -219,7 +219,7 @@ describe("WarlordsResolve — conditional self-heal", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(15);
+    expect(state.combatants[0].health).toBe(15);
 
     const result = engine.executeAction(
       state,
@@ -231,19 +231,19 @@ describe("WarlordsResolve — conditional self-heal", () => {
       definition,
     );
 
-    expect(result.state.players[0].health).toBe(19);
+    expect(result.state.combatants[0].health).toBe(19);
   });
 
   it("heals 12 total when below threshold", () => {
     const setup = selfDamage(14);
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [setup.id, WARLORDS_RESOLVE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [setup.id, setup],
@@ -264,7 +264,7 @@ describe("WarlordsResolve — conditional self-heal", () => {
       definition,
     ).state;
 
-    expect(state.players[0].health).toBe(6);
+    expect(state.combatants[0].health).toBe(6);
 
     const result = engine.executeAction(
       state,
@@ -276,7 +276,7 @@ describe("WarlordsResolve — conditional self-heal", () => {
       definition,
     );
 
-    expect(result.state.players[0].health).toBe(18);
+    expect(result.state.combatants[0].health).toBe(18);
   });
 });
 
@@ -303,12 +303,12 @@ describe("EffectGroup", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [groupCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[groupCard.id, groupCard]]),
     };
@@ -325,7 +325,7 @@ describe("EffectGroup", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(13);
+    expect(result.state.combatants[1].health).toBe(13);
   });
 
   it("group ordering is reflected in state transitions — damage before heal", () => {
@@ -350,12 +350,12 @@ describe("EffectGroup", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [orderedCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[orderedCard.id, orderedCard]]),
     };
@@ -372,7 +372,7 @@ describe("EffectGroup", () => {
       definition,
     );
 
-    expect(result.state.players[0].health).toBe(18);
+    expect(result.state.combatants[0].health).toBe(18);
   });
 
   it("conditional inside a group is skipped when condition is not met", () => {
@@ -406,12 +406,12 @@ describe("EffectGroup", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [groupCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[groupCard.id, groupCard]]),
     };
@@ -428,19 +428,19 @@ describe("EffectGroup", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(17);
+    expect(result.state.combatants[1].health).toBe(17);
   });
 });
 
 describe("Shatter", () => {
   it("deals 6 damage and applies -4 heal modifier when enemy is healthy", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [SHATTER_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[SHATTER_ID, Shatter]]),
     };
@@ -457,9 +457,9 @@ describe("Shatter", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(14);
-    expect(result.state.players[1].modifiers).toHaveLength(1);
-    expect(result.state.players[1].modifiers[0]).toStrictEqual({
+    expect(result.state.combatants[1].health).toBe(14);
+    expect(result.state.combatants[1].modifiers).toHaveLength(1);
+    expect(result.state.combatants[1].modifiers[0]).toStrictEqual({
       type: ModifierType.Heal,
       amount: -4,
       remainingUses: 1,
@@ -470,12 +470,12 @@ describe("Shatter", () => {
     const setup = enemyDamage(9);
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [setup.id, SHATTER_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [setup.id, setup],
@@ -496,7 +496,7 @@ describe("Shatter", () => {
       definition,
     ).state;
 
-    expect(state.players[1].health).toBe(11);
+    expect(state.combatants[1].health).toBe(11);
 
     const result = engine.executeAction(
       state,
@@ -508,19 +508,19 @@ describe("Shatter", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(-1);
+    expect(result.state.combatants[1].health).toBe(-1);
   });
 
   it("conditional uses state after the Group sub-effects complete", () => {
     const setup = enemyDamage(3);
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [setup.id, SHATTER_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([
         [setup.id, setup],
@@ -541,7 +541,7 @@ describe("Shatter", () => {
       definition,
     ).state;
 
-    expect(state.players[1].health).toBe(17);
+    expect(state.combatants[1].health).toBe(17);
 
     const result = engine.executeAction(
       state,
@@ -553,19 +553,19 @@ describe("Shatter", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(5);
+    expect(result.state.combatants[1].health).toBe(5);
   });
 });
 
 describe("Deterministic execution", () => {
   it("does not mutate prior state", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [PREDATORY_STRIKE_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[PREDATORY_STRIKE_ID, PredatoryStrike]]),
     };
@@ -582,17 +582,17 @@ describe("Deterministic execution", () => {
       definition,
     );
 
-    expect(state.players[1].health).toBe(20);
+    expect(state.combatants[1].health).toBe(20);
   });
 
   it("produces the same result from the same state (replay consistency)", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [SHATTER_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[SHATTER_ID, Shatter]]),
     };
@@ -609,11 +609,11 @@ describe("Deterministic execution", () => {
     const resultA = engine.executeAction(state, action, definition);
     const resultB = engine.executeAction(state, action, definition);
 
-    expect(resultA.state.players[1].health).toBe(
-      resultB.state.players[1].health,
+    expect(resultA.state.combatants[1].health).toBe(
+      resultB.state.combatants[1].health,
     );
-    expect(resultA.state.players[1].modifiers).toStrictEqual(
-      resultB.state.players[1].modifiers,
+    expect(resultA.state.combatants[1].modifiers).toStrictEqual(
+      resultB.state.combatants[1].modifiers,
     );
   });
 });

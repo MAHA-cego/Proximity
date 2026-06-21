@@ -11,23 +11,23 @@ import {
   EventType,
   GOBLIN_RAIDER_ID,
   GoblinRaider,
-  GoblinRaiderMatchPlayer,
+  GoblinRaiderMatchCombatant,
   MatchStatus,
   TargetingType,
   Team,
   type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type EndTurnAction,
   type MatchEndedEvent,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
@@ -45,9 +45,9 @@ const attackCard: CardDefinition = {
 };
 
 const definition = {
-  players: [
-    { player: playerOne, loadout: { cardDefinitionIds: [attackCard.id] } },
-    GoblinRaiderMatchPlayer,
+  combatants: [
+    { combatant: playerOne, loadout: { cardDefinitionIds: [attackCard.id] } },
+    GoblinRaiderMatchCombatant,
   ],
   cardDefinitions: new Map([
     [attackCard.id, attackCard],
@@ -55,13 +55,13 @@ const definition = {
   ]),
 };
 
-const endTurn = (actorId: PlayerId): EndTurnAction => ({
+const endTurn = (actorId: CombatantId): EndTurnAction => ({
   type: ActionType.EndTurn,
   actorId,
 });
 
 const useCard = (
-  actorId: PlayerId,
+  actorId: CombatantId,
   cardInstanceId: CardInstanceId,
 ): UseCardAction => ({
   type: ActionType.UseCard,
@@ -73,25 +73,25 @@ describe("PvE initialization", () => {
   it("enemy initializes with correct health", () => {
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    expect(state.players[1].health).toBe(GoblinRaider.maxHealth);
+    expect(state.combatants[1].health).toBe(GoblinRaider.maxHealth);
   });
 
   it("enemy initializes with the authored number of cards", () => {
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    expect(state.players[1].cards).toHaveLength(1);
+    expect(state.combatants[1].cards).toHaveLength(1);
   });
 
   it("enemy cards initialize ready to use", () => {
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    expect(state.players[1].cards[0].remainingCooldown).toBe(0);
+    expect(state.combatants[1].cards[0].remainingCooldown).toBe(0);
   });
 
   it("enemy is assigned the correct identity", () => {
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    expect(state.players[1].player.id).toBe(GOBLIN_RAIDER_ID);
+    expect(state.combatants[1].combatant.id).toBe(GOBLIN_RAIDER_ID);
   });
 });
 
@@ -106,7 +106,7 @@ describe("PvE combat", () => {
       definition,
     );
 
-    expect(result.state.players[1].health).toBe(10);
+    expect(result.state.combatants[1].health).toBe(10);
   });
 
   it("enemy can deal damage to the player", () => {
@@ -125,7 +125,7 @@ describe("PvE combat", () => {
       definition,
     );
 
-    expect(result.state.players[0].health).toBe(14);
+    expect(result.state.combatants[0].health).toBe(14);
   });
 
   it("enemy card enters cooldown after use", () => {
@@ -144,7 +144,7 @@ describe("PvE combat", () => {
       definition,
     );
 
-    expect(result.state.players[1].cards[0].remainingCooldown).toBe(1);
+    expect(result.state.combatants[1].cards[0].remainingCooldown).toBe(1);
   });
 
   it("enemy card cooldown decrements at the start of the enemy's next turn", () => {
@@ -170,7 +170,7 @@ describe("PvE combat", () => {
     ).state;
 
     // Cooldown is still 1 — it decrements at the start of the enemy's next turn
-    expect(state.players[1].cards[0].remainingCooldown).toBe(1);
+    expect(state.combatants[1].cards[0].remainingCooldown).toBe(1);
 
     // PlayerOne EndTurns, starting the goblin's next turn — cooldown decrements
     state = engine.executeAction(
@@ -179,7 +179,7 @@ describe("PvE combat", () => {
       definition,
     ).state;
 
-    expect(state.players[1].cards[0].remainingCooldown).toBe(0);
+    expect(state.combatants[1].cards[0].remainingCooldown).toBe(0);
   });
 });
 
@@ -226,20 +226,20 @@ describe("PvE match resolution", () => {
     );
 
     expect(result.state.status).toBe(MatchStatus.Completed);
-    expect(result.state.players[1].health).toBeLessThanOrEqual(0);
+    expect(result.state.combatants[1].health).toBeLessThanOrEqual(0);
   });
 
   it("match ends when the player is defeated", () => {
-    const fragilePlayer: Player = {
-      id: "fragile-player" as PlayerId,
+    const fragilePlayer: CombatantDefinition = {
+      id: "fragile-player" as CombatantId,
       team: Team.One,
       maxHealth: 6,
     };
 
     const pveDefinition = {
-      players: [
-        { player: fragilePlayer, loadout: { cardDefinitionIds: [] } },
-        GoblinRaiderMatchPlayer,
+      combatants: [
+        { combatant: fragilePlayer, loadout: { cardDefinitionIds: [] } },
+        GoblinRaiderMatchCombatant,
       ],
       cardDefinitions: new Map([[BASIC_STRIKE_ID, BasicStrike]]),
     };
@@ -252,7 +252,7 @@ describe("PvE match resolution", () => {
 
     state = engine.executeAction(
       state,
-      endTurn("fragile-player" as PlayerId),
+      endTurn("fragile-player" as CombatantId),
       pveDefinition,
     ).state;
 
@@ -263,7 +263,7 @@ describe("PvE match resolution", () => {
     );
 
     expect(result.state.status).toBe(MatchStatus.Completed);
-    expect(result.state.players[0].health).toBeLessThanOrEqual(0);
+    expect(result.state.combatants[0].health).toBeLessThanOrEqual(0);
   });
 
   it("the surviving combatant is recorded as the winner", () => {
@@ -374,7 +374,7 @@ describe("Immutability", () => {
   it("does not mutate the state passed to executeAction", () => {
     const engine = createEngine();
     const state = createGame({ matchId: "match-1" as MatchId, definition });
-    const originalGoblinHealth = state.players[1].health;
+    const originalGoblinHealth = state.combatants[1].health;
 
     engine.executeAction(
       state,
@@ -382,7 +382,7 @@ describe("Immutability", () => {
       definition,
     );
 
-    expect(state.players[1].health).toBe(originalGoblinHealth);
+    expect(state.combatants[1].health).toBe(originalGoblinHealth);
   });
 
   it("does not mutate enemy card state between actions", () => {
@@ -394,7 +394,7 @@ describe("Immutability", () => {
       definition,
     ).state;
 
-    const snapshot = state.players[1].cards[0].remainingCooldown;
+    const snapshot = state.combatants[1].cards[0].remainingCooldown;
 
     engine.executeAction(
       state,
@@ -402,6 +402,6 @@ describe("Immutability", () => {
       definition,
     );
 
-    expect(state.players[1].cards[0].remainingCooldown).toBe(snapshot);
+    expect(state.combatants[1].cards[0].remainingCooldown).toBe(snapshot);
   });
 });

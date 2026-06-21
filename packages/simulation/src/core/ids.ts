@@ -2,7 +2,7 @@ import type { Brand } from "./brand";
 
 export type MatchId = Brand<string, "MatchId">;
 
-export type PlayerId = Brand<string, "PlayerId">;
+export type CombatantId = Brand<string, "CombatantId">;
 
 export type EntityId = Brand<string, "EntityId">;
 

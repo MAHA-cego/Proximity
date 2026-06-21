@@ -13,31 +13,31 @@ import {
   type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type ConcedeAction,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
 describe("MatchSystem", () => {
   it("ends the match when a player concedes", () => {
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
 
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map(),
     };
@@ -82,22 +82,22 @@ describe("MatchSystem", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
 
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 5,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };

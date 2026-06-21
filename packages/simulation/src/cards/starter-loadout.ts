@@ -1,4 +1,8 @@
-import type { CardDefinition, CardDefinitionId, PlayerLoadout } from "../core";
+import type {
+  CardDefinition,
+  CardDefinitionId,
+  CombatantLoadout,
+} from "../core";
 import { AdrenalineRush, ADRENALINE_RUSH_ID } from "./adrenaline-rush";
 import {
   EmergencyTreatment,
@@ -7,7 +11,7 @@ import {
 import { FinishingBlow, FINISHING_BLOW_ID } from "./finishing-blow";
 import { TacticalBurst, TACTICAL_BURST_ID } from "./tactical-burst";
 
-export const STARTER_LOADOUT: PlayerLoadout = {
+export const STARTER_LOADOUT: CombatantLoadout = {
   cardDefinitionIds: [
     FINISHING_BLOW_ID,
     EMERGENCY_TREATMENT_ID,

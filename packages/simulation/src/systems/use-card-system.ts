@@ -15,35 +15,35 @@ export class UseCardSystem implements GameSystem {
 
     const { state } = context;
 
-    const playerIndex = state.players.findIndex(
-      (ps) => ps.player.id === action.actorId,
+    const combatantIndex = state.combatants.findIndex(
+      (cs) => cs.combatant.id === action.actorId,
     );
 
-    const playerState = state.players[playerIndex];
+    const combatantState = state.combatants[combatantIndex];
 
-    const cardIndex = playerState.cards.findIndex(
+    const cardIndex = combatantState.cards.findIndex(
       (c) => c.instanceId === action.cardInstanceId,
     );
 
-    const card = playerState.cards[cardIndex];
+    const card = combatantState.cards[cardIndex];
 
     const cardDefinition = context.definition.cardDefinitions.get(
       card.definitionId,
     )!;
 
     const updatedCards = [
-      ...playerState.cards.slice(0, cardIndex),
+      ...combatantState.cards.slice(0, cardIndex),
       { ...card, remainingCooldown: cardDefinition.cooldown },
-      ...playerState.cards.slice(cardIndex + 1),
+      ...combatantState.cards.slice(cardIndex + 1),
     ];
 
-    const updatedPlayers = [
-      ...state.players.slice(0, playerIndex),
-      { ...playerState, cards: updatedCards },
-      ...state.players.slice(playerIndex + 1),
+    const updatedCombatants = [
+      ...state.combatants.slice(0, combatantIndex),
+      { ...combatantState, cards: updatedCards },
+      ...state.combatants.slice(combatantIndex + 1),
     ];
 
-    context.replaceState({ ...state, players: updatedPlayers });
+    context.replaceState({ ...state, combatants: updatedCombatants });
 
     dispatchTrigger(context, AbilityTrigger.OnUse, cardDefinition.abilities);
   }

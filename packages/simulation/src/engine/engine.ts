@@ -38,13 +38,13 @@ export class Engine {
 
     const syntheticAction = {
       type: ActionType.Pass as const,
-      actorId: state.players[0].player.id,
+      actorId: state.combatants[0].combatant.id,
     };
 
     const context = new ExecutionContext(state, syntheticAction, definition);
 
-    for (const playerState of state.players) {
-      for (const card of playerState.cards) {
+    for (const combatantState of state.combatants) {
+      for (const card of combatantState.cards) {
         const cardDefinition = definition.cardDefinitions.get(
           card.definitionId,
         )!;
@@ -53,7 +53,7 @@ export class Engine {
           context,
           AbilityTrigger.Passive,
           cardDefinition.abilities,
-          playerState.player.id,
+          combatantState.combatant.id,
         );
       }
     }
@@ -66,20 +66,20 @@ export class Engine {
 
     if (action.type !== ActionType.UseCard) return;
 
-    if (action.actorId !== state.turn.activePlayerId) {
+    if (action.actorId !== state.turn.activeCombatantId) {
       throw IllegalActionError.notActivePlayer();
     }
 
     let cardExists = false;
     let cardOwned = false;
 
-    for (const ps of state.players) {
-      const found = ps.cards.some(
+    for (const cs of state.combatants) {
+      const found = cs.cards.some(
         (c) => c.instanceId === action.cardInstanceId,
       );
       if (found) {
         cardExists = true;
-        cardOwned = ps.player.id === action.actorId;
+        cardOwned = cs.combatant.id === action.actorId;
         break;
       }
     }
@@ -87,10 +87,10 @@ export class Engine {
     if (!cardExists) throw InvalidActionError.cardNotFound();
     if (!cardOwned) throw InvalidActionError.cardNotOwned();
 
-    const playerState = state.players.find(
-      (ps) => ps.player.id === action.actorId,
+    const combatantState = state.combatants.find(
+      (cs) => cs.combatant.id === action.actorId,
     )!;
-    const card = playerState.cards.find(
+    const card = combatantState.cards.find(
       (c) => c.instanceId === action.cardInstanceId,
     )!;
 

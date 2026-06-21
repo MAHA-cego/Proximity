@@ -3,26 +3,26 @@ import {
   Team,
   type CardDefinition,
   type CardDefinitionId,
-  type MatchPlayer,
-  type Player,
-  type PlayerLoadout,
-  type PlayerId,
+  type CombatantDefinition,
+  type CombatantId,
+  type CombatantLoadout,
+  type MatchCombatant,
 } from "../core";
 
-export const GOBLIN_RAIDER_ID = "goblin-raider" as PlayerId;
+export const GOBLIN_RAIDER_ID = "goblin-raider" as CombatantId;
 
-export const GoblinRaider: Player = {
+export const GoblinRaider: CombatantDefinition = {
   id: GOBLIN_RAIDER_ID,
   team: Team.Two,
   maxHealth: 15,
 };
 
-export const GoblinRaiderLoadout: PlayerLoadout = {
+export const GoblinRaiderLoadout: CombatantLoadout = {
   cardDefinitionIds: [BASIC_STRIKE_ID],
 };
 
-export const GoblinRaiderMatchPlayer: MatchPlayer = {
-  player: GoblinRaider,
+export const GoblinRaiderMatchCombatant: MatchCombatant = {
+  combatant: GoblinRaider,
   loadout: GoblinRaiderLoadout,
 };
 

@@ -10,10 +10,10 @@ import {
   Team,
   type CardDefinition,
   type CardDefinitionId,
+  type CombatantDefinition,
+  type CombatantId,
   type EndTurnAction,
   type MatchId,
-  type Player,
-  type PlayerId,
 } from "../src";
 
 describe("OnTurnStart dispatch", () => {
@@ -30,21 +30,21 @@ describe("OnTurnStart dispatch", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -58,9 +58,9 @@ describe("OnTurnStart dispatch", () => {
 
     const result = createEngine().executeAction(state, endTurn, definition);
 
-    expect(result.state.players[1].health).toBe(17);
-    expect(result.state.players[0].health).toBe(20);
-    expect(state.players[1].health).toBe(20);
+    expect(result.state.combatants[1].health).toBe(17);
+    expect(result.state.combatants[0].health).toBe(20);
+    expect(state.combatants[1].health).toBe(20);
   });
 
   it("does not fire abilities for the player ending their turn", () => {
@@ -76,21 +76,21 @@ describe("OnTurnStart dispatch", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -104,7 +104,7 @@ describe("OnTurnStart dispatch", () => {
 
     const result = createEngine().executeAction(state, endTurn, definition);
 
-    expect(result.state.players[0].health).toBe(20);
+    expect(result.state.combatants[0].health).toBe(20);
   });
 });
 
@@ -122,21 +122,21 @@ describe("Burn", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [burn.id] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [burn.id] } },
       ],
       cardDefinitions: new Map([[burn.id, burn]]),
     };
@@ -150,8 +150,8 @@ describe("Burn", () => {
 
     const result = createEngine().executeAction(state, endTurn, definition);
 
-    expect(result.state.players[1].health).toBe(15);
-    expect(result.state.players[0].health).toBe(20);
+    expect(result.state.combatants[1].health).toBe(15);
+    expect(result.state.combatants[0].health).toBe(20);
   });
 });
 
@@ -172,21 +172,21 @@ describe("Regeneration", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [regen.id] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [regen.id] } },
       ],
       cardDefinitions: new Map([[regen.id, regen]]),
     };
@@ -200,7 +200,7 @@ describe("Regeneration", () => {
 
     const result = createEngine().executeAction(state, endTurn, definition);
 
-    expect(result.state.players[1].health).toBe(14);
+    expect(result.state.combatants[1].health).toBe(14);
   });
 });
 
@@ -223,21 +223,21 @@ describe("Multiple persistent abilities", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [card.id] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [card.id] } },
       ],
       cardDefinitions: new Map([[card.id, card]]),
     };
@@ -251,7 +251,7 @@ describe("Multiple persistent abilities", () => {
 
     const result = createEngine().executeAction(state, endTurn, definition);
 
-    expect(result.state.players[1].health).toBe(17);
-    expect(result.state.players[0].health).toBe(18);
+    expect(result.state.combatants[1].health).toBe(17);
+    expect(result.state.combatants[0].health).toBe(18);
   });
 });

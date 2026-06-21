@@ -15,20 +15,20 @@ import {
   type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
 
-const playerTwo: Player = {
-  id: "player-2" as PlayerId,
+const playerTwo: CombatantDefinition = {
+  id: "player-2" as CombatantId,
   team: Team.Two,
   maxHealth: 20,
 };
@@ -36,9 +36,9 @@ const playerTwo: Player = {
 describe("Volley", () => {
   it("deals 4 damage to each enemy", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [VOLLEY_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [VOLLEY_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[VOLLEY_ID, Volley]]),
     };
@@ -53,14 +53,14 @@ describe("Volley", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(16);
+    expect(result.state.combatants[1].health).toBe(16);
   });
 
   it("does not affect the actor", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [VOLLEY_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [VOLLEY_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[VOLLEY_ID, Volley]]),
     };
@@ -75,14 +75,14 @@ describe("Volley", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[0].health).toBe(20);
+    expect(result.state.combatants[0].health).toBe(20);
   });
 
   it("does not mutate prior state", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [VOLLEY_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [VOLLEY_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[VOLLEY_ID, Volley]]),
     };
@@ -97,19 +97,19 @@ describe("Volley", () => {
 
     createEngine().executeAction(state, action, definition);
 
-    expect(state.players[1].health).toBe(20);
+    expect(state.combatants[1].health).toBe(20);
   });
 });
 
 describe("Chain Lightning", () => {
   it("deals 6 damage to each enemy", () => {
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [CHAIN_LIGHTNING_ID] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[CHAIN_LIGHTNING_ID, ChainLightning]]),
     };
@@ -124,7 +124,7 @@ describe("Chain Lightning", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(14);
+    expect(result.state.combatants[1].health).toBe(14);
   });
 });
 
@@ -146,12 +146,12 @@ describe("AllEnemies multi-target execution", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [burstCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[burstCard.id, burstCard]]),
     };
@@ -166,14 +166,14 @@ describe("AllEnemies multi-target execution", () => {
 
     const result = createEngine().executeAction(state, action, definition);
 
-    expect(result.state.players[1].health).toBe(15);
+    expect(result.state.combatants[1].health).toBe(15);
   });
 
   it("produces the same result from the same state (replay consistency)", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [VOLLEY_ID] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [VOLLEY_ID] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[VOLLEY_ID, Volley]]),
     };
@@ -190,8 +190,8 @@ describe("AllEnemies multi-target execution", () => {
     const resultA = engine.executeAction(state, action, definition);
     const resultB = engine.executeAction(state, action, definition);
 
-    expect(resultA.state.players[1].health).toBe(
-      resultB.state.players[1].health,
+    expect(resultA.state.combatants[1].health).toBe(
+      resultB.state.combatants[1].health,
     );
   });
 });

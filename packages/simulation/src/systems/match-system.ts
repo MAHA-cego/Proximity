@@ -13,12 +13,14 @@ export class MatchSystem implements GameSystem {
     }
 
     if (context.action.type === ActionType.Concede) {
-      const winner = context.state.players.find(
-        ({ player }) => player.id !== context.action.actorId,
+      const winner = context.state.combatants.find(
+        ({ combatant }) => combatant.id !== context.action.actorId,
       );
 
       if (!winner) {
-        throw new InvalidStateError("Unable to determine the winning player.");
+        throw new InvalidStateError(
+          "Unable to determine the winning combatant.",
+        );
       }
 
       context.replaceState({
@@ -28,23 +30,23 @@ export class MatchSystem implements GameSystem {
 
       context.emit({
         type: EventType.MatchEnded,
-        winnerId: winner.player.id,
+        winnerId: winner.combatant.id,
         loserId: context.action.actorId,
       });
 
       return;
     }
 
-    const defeated = context.state.players.find((ps) => ps.health <= 0);
+    const defeated = context.state.combatants.find((cs) => cs.health <= 0);
 
     if (!defeated) {
       return;
     }
 
-    const winner = context.state.players.find((ps) => ps.health > 0);
+    const winner = context.state.combatants.find((cs) => cs.health > 0);
 
     if (!winner) {
-      throw new InvalidStateError("Unable to determine the winning player.");
+      throw new InvalidStateError("Unable to determine the winning combatant.");
     }
 
     context.replaceState({
@@ -54,8 +56,8 @@ export class MatchSystem implements GameSystem {
 
     context.emit({
       type: EventType.MatchEnded,
-      winnerId: winner.player.id,
-      loserId: defeated.player.id,
+      winnerId: winner.combatant.id,
+      loserId: defeated.combatant.id,
     });
   }
 }

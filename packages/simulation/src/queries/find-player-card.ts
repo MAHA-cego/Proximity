@@ -1,17 +1,19 @@
-import type { CardInstanceId, PlayerId } from "../core";
+import type { CardInstanceId, CombatantId } from "../core";
 
-import type { GameState, PlayerCardState } from "../state";
+import type { CombatantCardState, GameState } from "../state";
 
-export function findPlayerCard(
+export function findCombatantCard(
   state: GameState,
-  playerId: PlayerId,
+  combatantId: CombatantId,
   instanceId: CardInstanceId,
-): PlayerCardState | undefined {
-  const playerState = state.players.find((ps) => ps.player.id === playerId);
+): CombatantCardState | undefined {
+  const combatantState = state.combatants.find(
+    (cs) => cs.combatant.id === combatantId,
+  );
 
-  if (playerState === undefined) {
+  if (combatantState === undefined) {
     return undefined;
   }
 
-  return playerState.cards.find((card) => card.instanceId === instanceId);
+  return combatantState.cards.find((card) => card.instanceId === instanceId);
 }

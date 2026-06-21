@@ -1,6 +1,6 @@
-import type { PlayerId } from "./ids";
+import type { CombatantId } from "./ids";
 
 export interface Turn {
   readonly number: number;
-  readonly activePlayerId: PlayerId;
+  readonly activeCombatantId: CombatantId;
 }

@@ -11,33 +11,33 @@ export class CooldownSystem implements GameSystem {
       return;
     }
 
-    const activePlayerId = context.state.turn.activePlayerId;
+    const activeCombatantId = context.state.turn.activeCombatantId;
 
-    const playerIndex = context.state.players.findIndex(
-      (ps) => ps.player.id === activePlayerId,
+    const combatantIndex = context.state.combatants.findIndex(
+      (cs) => cs.combatant.id === activeCombatantId,
     );
 
-    const playerState = context.state.players[playerIndex];
+    const combatantState = context.state.combatants[combatantIndex];
 
-    const updatedCards = playerState.cards.map((card) => ({
+    const updatedCards = combatantState.cards.map((card) => ({
       ...card,
       remainingCooldown: Math.max(0, card.remainingCooldown - 1),
     }));
 
-    const updatedPlayers = [
-      ...context.state.players.slice(0, playerIndex),
-      { ...playerState, cards: updatedCards },
-      ...context.state.players.slice(playerIndex + 1),
+    const updatedCombatants = [
+      ...context.state.combatants.slice(0, combatantIndex),
+      { ...combatantState, cards: updatedCards },
+      ...context.state.combatants.slice(combatantIndex + 1),
     ];
 
     context.replaceState({
       ...context.state,
-      players: updatedPlayers,
+      combatants: updatedCombatants,
     });
 
-    const updatedPlayerState = context.state.players[playerIndex];
+    const updatedCombatantState = context.state.combatants[combatantIndex];
 
-    for (const card of updatedPlayerState.cards) {
+    for (const card of updatedCombatantState.cards) {
       const cardDefinition = context.definition.cardDefinitions.get(
         card.definitionId,
       )!;
@@ -46,7 +46,7 @@ export class CooldownSystem implements GameSystem {
         context,
         AbilityTrigger.OnTurnStart,
         cardDefinition.abilities,
-        updatedPlayerState.player.id,
+        updatedCombatantState.combatant.id,
       );
     }
   }

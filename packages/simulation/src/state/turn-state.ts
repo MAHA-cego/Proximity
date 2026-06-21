@@ -1,7 +1,7 @@
-import type { PlayerId } from "../core";
+import type { CombatantId } from "../core";
 
 export interface TurnState {
   readonly number: number;
 
-  readonly activePlayerId: PlayerId;
+  readonly activeCombatantId: CombatantId;
 }

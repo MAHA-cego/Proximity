@@ -10,10 +10,10 @@ import {
   type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type EndTurnAction,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
@@ -31,22 +31,22 @@ describe("CooldownSystem", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
 
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -63,7 +63,7 @@ describe("CooldownSystem", () => {
 
     const { state: state1 } = engine.executeAction(state0, useCard, definition);
 
-    expect(state1.players[0].cards[0].remainingCooldown).toBe(3);
+    expect(state1.combatants[0].cards[0].remainingCooldown).toBe(3);
 
     const endTurn1: EndTurnAction = {
       type: ActionType.EndTurn,
@@ -76,9 +76,9 @@ describe("CooldownSystem", () => {
       definition,
     );
 
-    expect(state2.turn.activePlayerId).toBe(playerTwo.id);
+    expect(state2.turn.activeCombatantId).toBe(playerTwo.id);
 
-    expect(state2.players[0].cards[0].remainingCooldown).toBe(3);
+    expect(state2.combatants[0].cards[0].remainingCooldown).toBe(3);
 
     const endTurn2: EndTurnAction = {
       type: ActionType.EndTurn,
@@ -91,9 +91,9 @@ describe("CooldownSystem", () => {
       definition,
     );
 
-    expect(state3.turn.activePlayerId).toBe(playerOne.id);
+    expect(state3.turn.activeCombatantId).toBe(playerOne.id);
 
-    expect(state3.players[0].cards[0].remainingCooldown).toBe(2);
+    expect(state3.combatants[0].cards[0].remainingCooldown).toBe(2);
   });
 
   it("does not reduce cooldowns below zero", () => {
@@ -109,22 +109,22 @@ describe("CooldownSystem", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
 
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -133,7 +133,7 @@ describe("CooldownSystem", () => {
 
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    expect(state.players[1].cards[0].remainingCooldown).toBe(0);
+    expect(state.combatants[1].cards[0].remainingCooldown).toBe(0);
 
     const endTurn: EndTurnAction = {
       type: ActionType.EndTurn,
@@ -142,6 +142,6 @@ describe("CooldownSystem", () => {
 
     const { state: result } = engine.executeAction(state, endTurn, definition);
 
-    expect(result.players[1].cards[0].remainingCooldown).toBe(0);
+    expect(result.combatants[1].cards[0].remainingCooldown).toBe(0);
   });
 });

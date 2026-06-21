@@ -6,9 +6,9 @@ import {
 
 import {
   MatchStatus,
+  type CombatantCardState,
+  type CombatantState,
   type GameState,
-  type PlayerCardState,
-  type PlayerState,
 } from "../state";
 
 export interface CreateGameOptions {
@@ -18,23 +18,23 @@ export interface CreateGameOptions {
 }
 
 export function createGame(options: CreateGameOptions): GameState {
-  if (options.definition.players.length < 2) {
-    throw new Error("A game requires at least two players.");
+  if (options.definition.combatants.length < 2) {
+    throw new Error("A game requires at least two combatants.");
   }
 
-  const players: PlayerState[] = options.definition.players.map(
-    ({ player, loadout }) => {
-      const cards: PlayerCardState[] = loadout.cardDefinitionIds.map(
+  const combatants: CombatantState[] = options.definition.combatants.map(
+    ({ combatant, loadout }) => {
+      const cards: CombatantCardState[] = loadout.cardDefinitionIds.map(
         (definitionId, index) => ({
-          instanceId: `${player.id}:${index + 1}` as CardInstanceId,
+          instanceId: `${combatant.id}:${index + 1}` as CardInstanceId,
           definitionId,
           remainingCooldown: 0,
         }),
       );
 
       return {
-        player,
-        health: player.maxHealth,
+        combatant,
+        health: combatant.maxHealth,
         cards,
         modifiers: [],
         statuses: [],
@@ -47,11 +47,11 @@ export function createGame(options: CreateGameOptions): GameState {
       id: options.matchId,
     },
 
-    players,
+    combatants,
 
     turn: {
       number: 1,
-      activePlayerId: players[0].player.id,
+      activeCombatantId: combatants[0].combatant.id,
     },
 
     status: MatchStatus.InProgress,

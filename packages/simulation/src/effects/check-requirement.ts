@@ -3,23 +3,24 @@ import {
   RequirementSubject,
   RequirementType,
   type AbilityRequirement,
-  type PlayerId,
+  type CombatantId,
 } from "../core";
 import type { GameState } from "../state";
 
 export function checkRequirement(
   state: GameState,
   req: AbilityRequirement,
-  actorId: PlayerId,
+  actorId: CombatantId,
 ): boolean {
   switch (req.type) {
     case RequirementType.Health: {
       const resolvedId =
         req.subject === RequirementSubject.Enemy
-          ? state.players.find((ps) => ps.player.id !== actorId)?.player.id
+          ? state.combatants.find((cs) => cs.combatant.id !== actorId)
+              ?.combatant.id
           : actorId;
-      const subjectState = state.players.find(
-        (ps) => ps.player.id === resolvedId,
+      const subjectState = state.combatants.find(
+        (cs) => cs.combatant.id === resolvedId,
       );
       if (!subjectState) return false;
       if (req.comparison === Comparison.Below)

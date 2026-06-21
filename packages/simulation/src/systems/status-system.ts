@@ -8,44 +8,44 @@ export class StatusSystem implements GameSystem {
   public execute(context: ExecutionContext): void {
     if (context.action.type !== ActionType.EndTurn) return;
 
-    const activePlayerId = context.state.turn.activePlayerId;
-    const playerIndex = context.state.players.findIndex(
-      (ps) => ps.player.id === activePlayerId,
+    const activeCombatantId = context.state.turn.activeCombatantId;
+    const combatantIndex = context.state.combatants.findIndex(
+      (cs) => cs.combatant.id === activeCombatantId,
     );
-    const playerState = context.state.players[playerIndex];
+    const combatantState = context.state.combatants[combatantIndex];
 
-    if (playerState.statuses.length === 0) return;
+    if (combatantState.statuses.length === 0) return;
 
-    for (const status of playerState.statuses) {
+    for (const status of combatantState.statuses) {
       switch (status.type) {
         case StatusType.Burn: {
           const { state } = context;
-          const target = state.players[playerIndex];
-          const updatedPlayers = [
-            ...state.players.slice(0, playerIndex),
+          const target = state.combatants[combatantIndex];
+          const updatedCombatants = [
+            ...state.combatants.slice(0, combatantIndex),
             { ...target, health: target.health - status.amount },
-            ...state.players.slice(playerIndex + 1),
+            ...state.combatants.slice(combatantIndex + 1),
           ];
-          context.replaceState({ ...state, players: updatedPlayers });
+          context.replaceState({ ...state, combatants: updatedCombatants });
           break;
         }
 
         case StatusType.Regeneration: {
           const { state } = context;
-          const target = state.players[playerIndex];
-          const matchPlayer = context.definition.players.find(
-            (mp) => mp.player.id === activePlayerId,
+          const target = state.combatants[combatantIndex];
+          const matchCombatant = context.definition.combatants.find(
+            (mc) => mc.combatant.id === activeCombatantId,
           )!;
-          const maxHealth = matchPlayer.player.maxHealth;
-          const updatedPlayers = [
-            ...state.players.slice(0, playerIndex),
+          const maxHealth = matchCombatant.combatant.maxHealth;
+          const updatedCombatants = [
+            ...state.combatants.slice(0, combatantIndex),
             {
               ...target,
               health: Math.min(target.health + status.amount, maxHealth),
             },
-            ...state.players.slice(playerIndex + 1),
+            ...state.combatants.slice(combatantIndex + 1),
           ];
-          context.replaceState({ ...state, players: updatedPlayers });
+          context.replaceState({ ...state, combatants: updatedCombatants });
           break;
         }
 
@@ -55,15 +55,15 @@ export class StatusSystem implements GameSystem {
     }
 
     const { state } = context;
-    const latestPlayer = state.players[playerIndex];
-    const updatedStatuses = latestPlayer.statuses
+    const latestCombatant = state.combatants[combatantIndex];
+    const updatedStatuses = latestCombatant.statuses
       .map((s) => ({ ...s, remainingDuration: s.remainingDuration - 1 }))
       .filter((s) => s.remainingDuration > 0);
-    const updatedPlayers = [
-      ...state.players.slice(0, playerIndex),
-      { ...latestPlayer, statuses: updatedStatuses },
-      ...state.players.slice(playerIndex + 1),
+    const updatedCombatants = [
+      ...state.combatants.slice(0, combatantIndex),
+      { ...latestCombatant, statuses: updatedStatuses },
+      ...state.combatants.slice(combatantIndex + 1),
     ];
-    context.replaceState({ ...state, players: updatedPlayers });
+    context.replaceState({ ...state, combatants: updatedCombatants });
   }
 }

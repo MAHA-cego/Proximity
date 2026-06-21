@@ -1,13 +1,17 @@
-import type { Player, RuntimeModifier, RuntimeStatus } from "../core";
+import type {
+  CombatantDefinition,
+  RuntimeModifier,
+  RuntimeStatus,
+} from "../core";
 
-import type { PlayerCardState } from "./player-card-state";
+import type { CombatantCardState } from "./player-card-state";
 
-export interface PlayerState {
-  readonly player: Player;
+export interface CombatantState {
+  readonly combatant: CombatantDefinition;
 
   readonly health: number;
 
-  readonly cards: readonly PlayerCardState[];
+  readonly cards: readonly CombatantCardState[];
 
   readonly modifiers: readonly RuntimeModifier[];
 

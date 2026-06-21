@@ -1,8 +1,8 @@
-import type { PlayerLoadout } from "./player-loadout";
-import type { Player } from "./player";
+import type { CombatantLoadout } from "./player-loadout";
+import type { CombatantDefinition } from "./player";
 
-export interface MatchPlayer {
-  readonly player: Player;
+export interface MatchCombatant {
+  readonly combatant: CombatantDefinition;
 
-  readonly loadout: PlayerLoadout;
+  readonly loadout: CombatantLoadout;
 }

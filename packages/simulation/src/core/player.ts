@@ -1,8 +1,8 @@
-import type { PlayerId } from "./ids";
+import type { CombatantId } from "./ids";
 import { Team } from "./team";
 
-export interface Player {
-  readonly id: PlayerId;
+export interface CombatantDefinition {
+  readonly id: CombatantId;
   readonly team: Team;
   readonly maxHealth: number;
 }

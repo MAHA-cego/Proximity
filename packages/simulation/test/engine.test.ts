@@ -11,30 +11,30 @@ import {
   Team,
   type CardDefinition,
   type CardDefinitionId,
+  type CombatantDefinition,
+  type CombatantId,
   type EndTurnAction,
   type MatchId,
-  type Player,
-  type PlayerId,
 } from "../src";
 
 describe("Engine", () => {
   it("advances the turn", () => {
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
 
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map(),
     };
@@ -55,17 +55,17 @@ describe("Engine", () => {
 
     expect(result.state.turn.number).toBe(2);
 
-    expect(result.state.turn.activePlayerId).toBe(playerTwo.id);
+    expect(result.state.turn.activeCombatantId).toBe(playerTwo.id);
 
     expect(result.events).toEqual([
       {
         type: EventType.TurnEnded,
-        playerId: playerOne.id,
+        combatantId: playerOne.id,
       },
     ]);
 
     expect(state.turn.number).toBe(1);
-    expect(state.turn.activePlayerId).toBe(playerOne.id);
+    expect(state.turn.activeCombatantId).toBe(playerOne.id);
   });
 
   it("applies passive abilities during initialization", () => {
@@ -81,22 +81,22 @@ describe("Engine", () => {
       ],
     };
 
-    const playerOne: Player = {
-      id: "player-1" as PlayerId,
+    const playerOne: CombatantDefinition = {
+      id: "player-1" as CombatantId,
       team: Team.One,
       maxHealth: 20,
     };
 
-    const playerTwo: Player = {
-      id: "player-2" as PlayerId,
+    const playerTwo: CombatantDefinition = {
+      id: "player-2" as CombatantId,
       team: Team.Two,
       maxHealth: 20,
     };
 
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [passive.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [passive.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[passive.id, passive]]),
     };
@@ -106,7 +106,7 @@ describe("Engine", () => {
       definition,
     );
 
-    expect(state.players[0].health).toBe(15);
-    expect(state.players[1].health).toBe(20);
+    expect(state.combatants[0].health).toBe(15);
+    expect(state.combatants[1].health).toBe(20);
   });
 });

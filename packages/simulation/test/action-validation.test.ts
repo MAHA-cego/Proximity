@@ -14,20 +14,20 @@ import {
   type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
+  type CombatantDefinition,
+  type CombatantId,
   type MatchId,
-  type Player,
-  type PlayerId,
   type UseCardAction,
 } from "../src";
 
-const playerOne: Player = {
-  id: "player-1" as PlayerId,
+const playerOne: CombatantDefinition = {
+  id: "player-1" as CombatantId,
   team: Team.One,
   maxHealth: 20,
 };
 
-const playerTwo: Player = {
-  id: "player-2" as PlayerId,
+const playerTwo: CombatantDefinition = {
+  id: "player-2" as CombatantId,
   team: Team.Two,
   maxHealth: 20,
 };
@@ -47,9 +47,9 @@ const cardA: CardDefinition = {
 describe("Card Ownership Validation", () => {
   it("rejects an unknown card instance id", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map(),
     };
@@ -69,9 +69,9 @@ describe("Card Ownership Validation", () => {
 
   it("does not mutate state when card is not found", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map(),
     };
@@ -88,15 +88,15 @@ describe("Card Ownership Validation", () => {
       createEngine().executeAction(state, action, definition),
     ).toThrow();
 
-    expect(state.players[0].health).toBe(20);
-    expect(state.players[1].health).toBe(20);
+    expect(state.combatants[0].health).toBe(20);
+    expect(state.combatants[1].health).toBe(20);
   });
 
   it("rejects a card that belongs to another player", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -116,9 +116,9 @@ describe("Card Ownership Validation", () => {
 
   it("does not mutate state when card is not owned by actor", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [cardA.id] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -135,17 +135,17 @@ describe("Card Ownership Validation", () => {
       createEngine().executeAction(state, action, definition),
     ).toThrow();
 
-    expect(state.players[0].cards).toHaveLength(0);
-    expect(state.players[1].cards[0].remainingCooldown).toBe(0);
+    expect(state.combatants[0].cards).toHaveLength(0);
+    expect(state.combatants[1].cards[0].remainingCooldown).toBe(0);
   });
 });
 
 describe("Cooldown Validation", () => {
   it("rejects a card that is on cooldown", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -172,9 +172,9 @@ describe("Cooldown Validation", () => {
 
   it("does not mutate state when card is on cooldown", () => {
     const definition = {
-      players: [
-        { player: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+      combatants: [
+        { combatant: playerOne, loadout: { cardDefinitionIds: [cardA.id] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[cardA.id, cardA]]),
     };
@@ -198,7 +198,7 @@ describe("Cooldown Validation", () => {
       engine.executeAction(stateAfterUse, action, definition),
     ).toThrow();
 
-    expect(stateAfterUse.players[0].cards[0].remainingCooldown).toBe(2);
+    expect(stateAfterUse.combatants[0].cards[0].remainingCooldown).toBe(2);
   });
 });
 
@@ -224,12 +224,12 @@ describe("Requirement Validation", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [restrictedCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[restrictedCard.id, restrictedCard]]),
     };
@@ -268,12 +268,12 @@ describe("Requirement Validation", () => {
     };
 
     const definition = {
-      players: [
+      combatants: [
         {
-          player: playerOne,
+          combatant: playerOne,
           loadout: { cardDefinitionIds: [restrictedCard.id] },
         },
-        { player: playerTwo, loadout: { cardDefinitionIds: [] } },
+        { combatant: playerTwo, loadout: { cardDefinitionIds: [] } },
       ],
       cardDefinitions: new Map([[restrictedCard.id, restrictedCard]]),
     };
@@ -290,7 +290,7 @@ describe("Requirement Validation", () => {
       createEngine().executeAction(state, action, definition),
     ).toThrow();
 
-    expect(state.players[0].cards[0].remainingCooldown).toBe(0);
-    expect(state.players[1].health).toBe(20);
+    expect(state.combatants[0].cards[0].remainingCooldown).toBe(0);
+    expect(state.combatants[1].health).toBe(20);
   });
 });
