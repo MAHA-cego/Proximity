@@ -1,17 +1,7 @@
 import {
-  BATTLE_CRY_ID,
-  BattleCry,
   CombatantControlType,
-  GUARD_ID,
-  Guard,
-  HEAVY_STRIKE_ID,
-  HeavyStrike,
-  LACERATION_ID,
-  Laceration,
-  RECOVER_ID,
-  Recover,
-  SLASH_ID,
-  Slash,
+  STARTER_CARD_DEFINITIONS,
+  STARTER_LOADOUT,
   Team,
   type CombatantDefinition,
   type CombatantId,
@@ -26,26 +16,6 @@ const PLAYER: CombatantDefinition = {
   team: Team.One,
   maxHealth: 100,
   controlType: CombatantControlType.Human,
-};
-
-const STARTER_CARD_DEFINITIONS = new Map([
-  [SLASH_ID, Slash],
-  [GUARD_ID, Guard],
-  [RECOVER_ID, Recover],
-  [HEAVY_STRIKE_ID, HeavyStrike],
-  [BATTLE_CRY_ID, BattleCry],
-  [LACERATION_ID, Laceration],
-]);
-
-const STARTER_LOADOUT = {
-  cardDefinitionIds: [
-    SLASH_ID,
-    GUARD_ID,
-    RECOVER_ID,
-    HEAVY_STRIKE_ID,
-    BATTLE_CRY_ID,
-    LACERATION_ID,
-  ],
 };
 
 export function createMatchDefinition(
