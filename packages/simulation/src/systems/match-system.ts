@@ -18,9 +18,7 @@ export class MatchSystem implements GameSystem {
       );
 
       if (!winner) {
-        throw new InvalidStateError(
-          "Unable to determine the winning combatant.",
-        );
+        throw InvalidStateError.winnerNotFound();
       }
 
       context.replaceState({
@@ -46,7 +44,7 @@ export class MatchSystem implements GameSystem {
     const winner = context.state.combatants.find((cs) => cs.health > 0);
 
     if (!winner) {
-      throw new InvalidStateError("Unable to determine the winning combatant.");
+      throw InvalidStateError.winnerNotFound();
     }
 
     context.replaceState({

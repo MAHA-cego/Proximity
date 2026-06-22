@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: [
+    "@proximity/simulation",
+    "@proximity/ai",
+    "@proximity/protocol",
+  ],
 };
 
 export default nextConfig;
