@@ -3,20 +3,21 @@ import type {
   CardDefinitionId,
   CombatantLoadout,
 } from "../core";
-import { AdrenalineRush, ADRENALINE_RUSH_ID } from "./adrenaline-rush";
-import {
-  EmergencyTreatment,
-  EMERGENCY_TREATMENT_ID,
-} from "./emergency-treatment";
-import { FinishingBlow, FINISHING_BLOW_ID } from "./finishing-blow";
-import { TacticalBurst, TACTICAL_BURST_ID } from "./tactical-burst";
+import { BattleCry, BATTLE_CRY_ID } from "./battle-cry";
+import { Guard, GUARD_ID } from "./guard";
+import { HeavyStrike, HEAVY_STRIKE_ID } from "./heavy-strike";
+import { Laceration, LACERATION_ID } from "./laceration";
+import { Recover, RECOVER_ID } from "./recover";
+import { Slash, SLASH_ID } from "./slash";
 
 export const STARTER_LOADOUT: CombatantLoadout = {
   cardDefinitionIds: [
-    FINISHING_BLOW_ID,
-    EMERGENCY_TREATMENT_ID,
-    ADRENALINE_RUSH_ID,
-    TACTICAL_BURST_ID,
+    SLASH_ID,
+    GUARD_ID,
+    RECOVER_ID,
+    HEAVY_STRIKE_ID,
+    BATTLE_CRY_ID,
+    LACERATION_ID,
   ],
 };
 
@@ -24,8 +25,10 @@ export const STARTER_CARD_DEFINITIONS: ReadonlyMap<
   CardDefinitionId,
   CardDefinition
 > = new Map([
-  [FINISHING_BLOW_ID, FinishingBlow],
-  [EMERGENCY_TREATMENT_ID, EmergencyTreatment],
-  [ADRENALINE_RUSH_ID, AdrenalineRush],
-  [TACTICAL_BURST_ID, TacticalBurst],
+  [SLASH_ID, Slash],
+  [GUARD_ID, Guard],
+  [RECOVER_ID, Recover],
+  [HEAVY_STRIKE_ID, HeavyStrike],
+  [BATTLE_CRY_ID, BattleCry],
+  [LACERATION_ID, Laceration],
 ]);

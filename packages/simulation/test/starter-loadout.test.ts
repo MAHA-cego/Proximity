@@ -263,7 +263,7 @@ describe("Tactical Burst", () => {
 });
 
 describe("Starter Loadout", () => {
-  it("initializes with all four cards at zero cooldown", () => {
+  it("initializes with all six cards at zero cooldown", () => {
     const definition = {
       combatants: [
         { combatant: playerOne, loadout: STARTER_LOADOUT },
@@ -274,8 +274,8 @@ describe("Starter Loadout", () => {
 
     const state = createGame({ matchId: "match-1" as MatchId, definition });
 
-    expect(state.combatants[0].cards).toHaveLength(4);
-    expect(state.combatants[1].cards).toHaveLength(4);
+    expect(state.combatants[0].cards).toHaveLength(6);
+    expect(state.combatants[1].cards).toHaveLength(6);
 
     for (const combatantState of state.combatants) {
       for (const card of combatantState.cards) {
