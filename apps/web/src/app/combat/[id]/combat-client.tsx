@@ -11,6 +11,7 @@ import {
   type CardDefinitionId,
   type CardInstanceId,
   type CombatantId,
+  type CombatantLoadout,
   type GameEvent,
 } from "@proximity/simulation";
 import { Stack } from "@/components/ui";
@@ -25,6 +26,7 @@ import {
   type PortraitFeedback,
 } from "@/components/combat";
 import { useCombat } from "@/hooks/use-combat";
+import { useProgression } from "@/lib/progression/progression-context";
 import { ENCOUNTER_REGISTRY } from "@/lib/simulation/encounters";
 import {
   createMatchDefinition,
@@ -229,9 +231,19 @@ function renderEvent(
 export function CombatClient({ encounterId }: CombatClientProps) {
   const encounter = ENCOUNTER_REGISTRY.get(encounterId)!;
 
+  const router = useRouter();
+  const { completeEncounter, currentDeck, unlockedCardDefinitions } =
+    useProgression();
+
+  const playerLoadout = useMemo<CombatantLoadout>(
+    () => ({ cardDefinitionIds: currentDeck }),
+    [currentDeck],
+  );
+
   const definition = useMemo(
-    () => createMatchDefinition(encounter),
-    [encounter],
+    () =>
+      createMatchDefinition(encounter, playerLoadout, unlockedCardDefinitions),
+    [encounter, playerLoadout, unlockedCardDefinitions],
   );
 
   const agent = useMemo(() => encounter.createAgent(), [encounter]);
@@ -243,8 +255,6 @@ export function CombatClient({ encounterId }: CombatClientProps) {
         .filter((def): def is CardDefinition => def !== undefined),
     [encounter],
   );
-
-  const router = useRouter();
   const { snapshot, playerPhaseEvents, aiPhaseEvents, playCard, reset } =
     useCombat(encounterId, definition, agent);
 
@@ -334,6 +344,23 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       if (lifecycleTimeout !== null) clearTimeout(lifecycleTimeout);
     };
   }, [playerPhaseEvents, aiPhaseEvents, snapshot.status, opponentState.health]);
+
+  // Grant encounter rewards exactly once when the player wins.
+  useEffect(() => {
+    if (matchPhase === "victory") {
+      completeEncounter(
+        encounterId,
+        encounter.rewardCardIds,
+        encounter.cardDefinitions,
+      );
+    }
+  }, [
+    matchPhase,
+    completeEncounter,
+    encounterId,
+    encounter.rewardCardIds,
+    encounter.cardDefinitions,
+  ]);
 
   // Portrait feedback: check revealed batch events for damage/healing targeting each combatant.
   const playerFeedback: PortraitFeedback = revealedInBatch.some(

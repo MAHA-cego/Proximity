@@ -31,6 +31,12 @@ export interface EncounterDefinition {
   readonly createAgent: () => AiAgent;
 }
 
+export const ENCOUNTER_ORDER: readonly string[] = [
+  CORRUPTED_SHEPHERDS_DOG_ID,
+  CORRUPTED_HUNTER_ID,
+  CORRUPTED_MILITIAMAN_ID,
+];
+
 export const ENCOUNTER_REGISTRY: ReadonlyMap<string, EncounterDefinition> =
   new Map([
     [

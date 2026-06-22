@@ -1,10 +1,11 @@
 import {
   CombatantControlType,
-  STARTER_CARD_DEFINITIONS,
-  STARTER_LOADOUT,
   Team,
+  type CardDefinition,
+  type CardDefinitionId,
   type CombatantDefinition,
   type CombatantId,
+  type CombatantLoadout,
   type MatchDefinition,
 } from "@proximity/simulation";
 import type { EncounterDefinition } from "./encounters";
@@ -20,15 +21,17 @@ const PLAYER: CombatantDefinition = {
 
 export function createMatchDefinition(
   encounter: EncounterDefinition,
+  playerLoadout: CombatantLoadout,
+  playerCardDefinitions: ReadonlyMap<CardDefinitionId, CardDefinition>,
 ): MatchDefinition {
   const cardDefinitions = new Map([
-    ...STARTER_CARD_DEFINITIONS,
+    ...playerCardDefinitions,
     ...encounter.cardDefinitions,
   ]);
 
   return {
     combatants: [
-      { combatant: PLAYER, loadout: STARTER_LOADOUT },
+      { combatant: PLAYER, loadout: playerLoadout },
       encounter.opponent,
     ],
     cardDefinitions,
