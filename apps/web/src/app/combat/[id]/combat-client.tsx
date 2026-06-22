@@ -7,6 +7,7 @@ import {
   MatchStatus,
   ModifierType,
   StatusType,
+  type CardDefinition,
   type CardDefinitionId,
   type CardInstanceId,
   type CombatantId,
@@ -31,6 +32,14 @@ import {
 } from "@/lib/simulation/match-factory";
 
 const EVENT_DELAY_MS = 150;
+const MATCH_COMPLETE_DELAY_MS = 800;
+
+type MatchPhase =
+  | "player-turn"
+  | "playback"
+  | "match-complete"
+  | "victory"
+  | "defeat";
 
 interface CombatClientProps {
   readonly encounterId: string;
@@ -227,20 +236,32 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
   const agent = useMemo(() => encounter.createAgent(), [encounter]);
 
+  const rewardCardDefinitions = useMemo<readonly CardDefinition[]>(
+    () =>
+      encounter.rewardCardIds
+        .map((id) => encounter.cardDefinitions.get(id))
+        .filter((def): def is CardDefinition => def !== undefined),
+    [encounter],
+  );
+
   const router = useRouter();
   const { snapshot, playerPhaseEvents, aiPhaseEvents, playCard, reset } =
     useCombat(encounterId, definition, agent);
 
-  // Sequential playback state
+  // Match lifecycle
+  const [matchPhase, setMatchPhase] = useState<MatchPhase>("player-turn");
+  // Sub-state within "playback" — which side is currently acting
+  const [playbackSide, setPlaybackSide] = useState<
+    "player" | "opponent" | null
+  >(null);
+
+  // Revealed event log
   const [revealedEvents, setRevealedEvents] = useState<readonly GameEvent[]>(
     [],
   );
   const [revealedInBatch, setRevealedInBatch] = useState<readonly GameEvent[]>(
     [],
   );
-  const [playbackPhase, setPlaybackPhase] = useState<
-    "player" | "opponent" | null
-  >(null);
   const [batchKey, setBatchKey] = useState(0);
 
   const playerState = snapshot.combatants.find(
@@ -251,13 +272,12 @@ export function CombatClient({ encounterId }: CombatClientProps) {
     (cs) => cs.combatant.id !== PLAYER_COMBATANT_ID,
   )!;
 
-  const isCompleted = snapshot.status === MatchStatus.Completed;
-  const playerWon = isCompleted && opponentState.health <= 0;
   const roundNumber = Math.ceil(snapshot.turn.number / 2);
-  const canPlay = !isCompleted && playbackPhase === null;
+  const canPlay = matchPhase === "player-turn";
+  const isMatchOver = matchPhase === "victory" || matchPhase === "defeat";
 
   // Consume the ordered event stream from useCombat and reveal events one by one.
-  // Tracks the player/opponent boundary so the UI can label each phase.
+  // Drives the match lifecycle from playback → player-turn or match-complete.
   useEffect(() => {
     const playerBatch = [...playerPhaseEvents];
     const aiBatch = [...aiPhaseEvents];
@@ -268,6 +288,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
     let index = 0;
     let active = true;
+    let lifecycleTimeout: ReturnType<typeof setTimeout> | null = null;
 
     function revealNext() {
       if (!active) return;
@@ -275,13 +296,14 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       const position = index - 1;
 
       if (position === 0) {
-        // First event — initialise the batch.
+        // First event — enter playback and initialise the batch.
         setBatchKey((k) => k + 1);
-        setPlaybackPhase(totalPlayerEvents > 0 ? "player" : "opponent");
+        setMatchPhase("playback");
+        setPlaybackSide(totalPlayerEvents > 0 ? "player" : "opponent");
         setRevealedInBatch([event]);
       } else if (position === totalPlayerEvents && totalPlayerEvents > 0) {
-        // First AI event — transition to opponent phase.
-        setPlaybackPhase("opponent");
+        // First AI event — transition to opponent side.
+        setPlaybackSide("opponent");
         setRevealedInBatch((prev) => [...prev, event]);
       } else {
         setRevealedInBatch((prev) => [...prev, event]);
@@ -292,7 +314,16 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       if (index < allEvents.length) {
         setTimeout(revealNext, EVENT_DELAY_MS);
       } else {
-        setPlaybackPhase(null);
+        // Playback complete — advance the match lifecycle.
+        setPlaybackSide(null);
+        if (snapshot.status === MatchStatus.Completed) {
+          setMatchPhase("match-complete");
+          lifecycleTimeout = setTimeout(() => {
+            setMatchPhase(opponentState.health <= 0 ? "victory" : "defeat");
+          }, MATCH_COMPLETE_DELAY_MS);
+        } else {
+          setMatchPhase("player-turn");
+        }
       }
     }
 
@@ -300,8 +331,9 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
     return () => {
       active = false;
+      if (lifecycleTimeout !== null) clearTimeout(lifecycleTimeout);
     };
-  }, [playerPhaseEvents, aiPhaseEvents]);
+  }, [playerPhaseEvents, aiPhaseEvents, snapshot.status, opponentState.health]);
 
   // Portrait feedback: check revealed batch events for damage/healing targeting each combatant.
   const playerFeedback: PortraitFeedback = revealedInBatch.some(
@@ -315,7 +347,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
             e.targetId === PLAYER_COMBATANT_ID,
         )
       ? "healing"
-      : isCompleted && !playerWon
+      : matchPhase === "defeat"
         ? "defeated"
         : null;
 
@@ -331,7 +363,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
             e.targetId === opponentState.combatant.id,
         )
       ? "healing"
-      : isCompleted && playerWon
+      : matchPhase === "victory"
         ? "defeated"
         : null;
 
@@ -343,7 +375,8 @@ export function CombatClient({ encounterId }: CombatClientProps) {
     reset();
     setRevealedEvents([]);
     setRevealedInBatch([]);
-    setPlaybackPhase(null);
+    setMatchPhase("player-turn");
+    setPlaybackSide(null);
     setBatchKey(0);
   };
 
@@ -353,7 +386,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       <header className="border-border shrink-0 border-b px-6 py-4">
         <Stack direction="row" align="center" justify="between">
           <p className="text-foreground font-mono text-sm">{encounter.name}</p>
-          <TurnIndicator roundNumber={roundNumber} isCompleted={isCompleted} />
+          <TurnIndicator roundNumber={roundNumber} isCompleted={isMatchOver} />
         </Stack>
       </header>
 
@@ -402,7 +435,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       </main>
 
       {/* Opponent phase indicator */}
-      {playbackPhase === "opponent" && !isCompleted && (
+      {matchPhase === "playback" && playbackSide === "opponent" && (
         <div className="flex shrink-0 justify-center py-2">
           <p className="text-muted font-mono text-xs tracking-[0.3em] uppercase">
             Opponent acting.
@@ -427,11 +460,12 @@ export function CombatClient({ encounterId }: CombatClientProps) {
         </div>
       </section>
 
-      {/* Match Overlay — deferred until playback completes */}
-      {isCompleted && playbackPhase === null && (
+      {/* Match Overlay — appears only after lifecycle reaches victory or defeat */}
+      {isMatchOver && (
         <MatchOverlay
-          playerWon={playerWon}
+          playerWon={matchPhase === "victory"}
           encounterName={encounter.name}
+          rewardCardDefinitions={rewardCardDefinitions}
           onReplay={handleReset}
           onLeave={() => router.push("/encounters")}
         />

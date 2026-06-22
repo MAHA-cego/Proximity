@@ -1,8 +1,44 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { CardDefinition, CardDefinitionId } from "@proximity/simulation";
 import { Stack } from "@/components/ui";
+import { CardRules } from "./card-rules";
+
+function formatCardName(id: CardDefinitionId): string {
+  return String(id)
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function RewardCard({ definition }: { readonly definition: CardDefinition }) {
+  return (
+    <div className="bg-surface border-foreground flex h-60 w-36 flex-col border">
+      <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
+        <p className="text-foreground truncate font-mono text-xs">
+          {formatCardName(definition.id)}
+        </p>
+      </div>
+      <div className="bg-surface-raised border-border h-24 w-full shrink-0 border-b" />
+      <div className="border-border flex h-7 shrink-0 items-center border-b px-3">
+        <p className="text-muted font-mono text-xs">
+          {definition.cooldown > 0 ? `cd ${definition.cooldown}` : "—"}
+        </p>
+      </div>
+      <div className="flex-1 overflow-hidden px-3 py-2">
+        <CardRules definition={definition} />
+      </div>
+    </div>
+  );
+}
+
+type OverlayPhase = "rewards" | "navigate";
 
 interface MatchOverlayProps {
   readonly playerWon: boolean;
   readonly encounterName: string;
+  readonly rewardCardDefinitions: readonly CardDefinition[];
   readonly onReplay: () => void;
   readonly onLeave: () => void;
 }
@@ -10,12 +46,31 @@ interface MatchOverlayProps {
 export function MatchOverlay({
   playerWon,
   encounterName,
+  rewardCardDefinitions,
   onReplay,
   onLeave,
 }: MatchOverlayProps) {
+  const [visible, setVisible] = useState(false);
+  const hasRewards = playerWon && rewardCardDefinitions.length > 0;
+  const [phase, setPhase] = useState<OverlayPhase>(
+    hasRewards ? "rewards" : "navigate",
+  );
+
+  useEffect(() => {
+    const id = setTimeout(() => setVisible(true), 0);
+    return () => clearTimeout(id);
+  }, []);
+
   return (
-    <div className="bg-background/90 absolute inset-0 z-10 flex items-center justify-center">
-      <Stack gap={6} align="center">
+    <div
+      className={[
+        "bg-background/90 absolute inset-0 z-10 flex items-center justify-center",
+        "transition-opacity duration-500",
+        visible ? "opacity-100" : "opacity-0",
+      ].join(" ")}
+    >
+      <Stack gap={8} align="center">
+        {/* Result header — always visible */}
         <Stack gap={2} align="center">
           <p className="text-foreground font-mono text-sm tracking-[0.3em] uppercase">
             {playerWon ? "Victory" : "Defeat"}
@@ -27,23 +82,49 @@ export function MatchOverlay({
           </p>
         </Stack>
 
-        <Stack direction="row" gap={3}>
+        {/* Reward cards — shown only during rewards phase */}
+        {phase === "rewards" && (
+          <Stack gap={4} align="center">
+            <p className="text-muted text-xs tracking-[0.3em] uppercase">
+              Unlocked
+            </p>
+            <div className="flex gap-3">
+              {rewardCardDefinitions.map((def) => (
+                <RewardCard key={String(def.id)} definition={def} />
+              ))}
+            </div>
+          </Stack>
+        )}
+
+        {/* Actions */}
+        {phase === "rewards" ? (
           <button
             type="button"
-            onClick={onReplay}
+            onClick={() => setPhase("navigate")}
             autoFocus
             className="border-foreground text-foreground hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
           >
-            Play Again
+            Continue
           </button>
-          <button
-            type="button"
-            onClick={onLeave}
-            className="border-border text-muted hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
-          >
-            Encounters
-          </button>
-        </Stack>
+        ) : (
+          <Stack direction="row" gap={3}>
+            <button
+              type="button"
+              onClick={onReplay}
+              autoFocus
+              className="border-foreground text-foreground hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
+            >
+              Play Again
+            </button>
+            <button
+              type="button"
+              onClick={onLeave}
+              className="border-border text-muted hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
+            >
+              Encounters
+            </button>
+          </Stack>
+        )}
       </Stack>
     </div>
   );
