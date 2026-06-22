@@ -1,11 +1,11 @@
 export { CombatCard } from "./combat-card";
-export { CombatLogEntry } from "./combat-log-entry";
+export { CombatLogEntry, type EntryAlignment } from "./combat-log-entry";
 export { ContextPanel } from "./context-panel";
 export { HealthBar } from "./health-bar";
 export { MatchOverlay } from "./match-overlay";
 export { ModifierBadge } from "./modifier-badge";
 export { OpponentArea } from "./opponent-area";
 export { PlayerArea } from "./player-area";
-export { PortraitCard } from "./portrait-card";
+export { PortraitCard, type PortraitFeedback } from "./portrait-card";
 export { StatusChip } from "./status-chip";
 export { TurnIndicator } from "./turn-indicator";

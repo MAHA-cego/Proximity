@@ -35,3 +35,27 @@ body {
   background-color: var(--background);
   color: var(--foreground);
 }
+
+@keyframes flash-damage {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes flash-heal {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
