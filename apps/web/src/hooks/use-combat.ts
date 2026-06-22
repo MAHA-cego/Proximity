@@ -25,6 +25,7 @@ export interface CombatControls {
   readonly playerPhaseEvents: readonly GameEvent[];
   readonly aiPhaseEvents: readonly GameEvent[];
   readonly playCard: (cardInstanceId: CardInstanceId) => void;
+  readonly canPlayCard: (cardInstanceId: CardInstanceId) => boolean;
   readonly reset: () => void;
 }
 
@@ -119,6 +120,21 @@ export function useCombat(
     [engine, definition, agent],
   );
 
+  const canPlayCard = useCallback(
+    (cardInstanceId: CardInstanceId): boolean => {
+      return engine.canExecuteAction(
+        state.snapshot,
+        {
+          type: ActionType.UseCard,
+          actorId: state.snapshot.turn.activeCombatantId,
+          cardInstanceId,
+        },
+        definition,
+      );
+    },
+    [engine, state.snapshot, definition],
+  );
+
   const reset = useCallback(() => {
     setState({
       snapshot: engine.initializeGame(
@@ -135,6 +151,7 @@ export function useCombat(
     playerPhaseEvents: state.playerPhaseEvents,
     aiPhaseEvents: state.aiPhaseEvents,
     playCard,
+    canPlayCard,
     reset,
   };
 }

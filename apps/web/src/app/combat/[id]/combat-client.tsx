@@ -26,6 +26,7 @@ import {
   type PortraitFeedback,
 } from "@/components/combat";
 import { useCombat } from "@/hooks/use-combat";
+import { useDeck } from "@/lib/progression/deck-context";
 import { useProgression } from "@/lib/progression/progression-context";
 import { ENCOUNTER_REGISTRY } from "@/lib/simulation/encounters";
 import {
@@ -232,12 +233,12 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   const encounter = ENCOUNTER_REGISTRY.get(encounterId)!;
 
   const router = useRouter();
-  const { completeEncounter, currentDeck, unlockedCardDefinitions } =
-    useProgression();
+  const { completeEncounter, unlockedCardDefinitions } = useProgression();
+  const { activeDeck } = useDeck();
 
   const playerLoadout = useMemo<CombatantLoadout>(
-    () => ({ cardDefinitionIds: currentDeck }),
-    [currentDeck],
+    () => ({ cardDefinitionIds: activeDeck }),
+    [activeDeck],
   );
 
   const definition = useMemo(
@@ -255,8 +256,14 @@ export function CombatClient({ encounterId }: CombatClientProps) {
         .filter((def): def is CardDefinition => def !== undefined),
     [encounter],
   );
-  const { snapshot, playerPhaseEvents, aiPhaseEvents, playCard, reset } =
-    useCombat(encounterId, definition, agent);
+  const {
+    snapshot,
+    playerPhaseEvents,
+    aiPhaseEvents,
+    playCard,
+    canPlayCard,
+    reset,
+  } = useCombat(encounterId, definition, agent);
 
   // Match lifecycle
   const [matchPhase, setMatchPhase] = useState<MatchPhase>("player-turn");
@@ -283,7 +290,6 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   )!;
 
   const roundNumber = Math.ceil(snapshot.turn.number / 2);
-  const canPlay = matchPhase === "player-turn";
   const isMatchOver = matchPhase === "victory" || matchPhase === "defeat";
 
   // Consume the ordered event stream from useCombat and reveal events one by one.
@@ -480,7 +486,9 @@ export function CombatClient({ encounterId }: CombatClientProps) {
                 definition.cardDefinitions.get(card.definitionId)!
               }
               remainingCooldown={card.remainingCooldown}
-              isPlayable={card.remainingCooldown === 0 && canPlay}
+              isPlayable={
+                matchPhase === "player-turn" && canPlayCard(card.instanceId)
+              }
               onPlay={() => handlePlayCard(card.instanceId)}
             />
           ))}

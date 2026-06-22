@@ -9,56 +9,11 @@ import {
   type ReactNode,
 } from "react";
 import {
-  BATTLE_CRY_ID,
-  BERSERK_ID,
-  EXPLOIT_ID,
-  FEINT_ID,
-  HEAVY_STRIKE_ID,
-  LACERATION_ID,
-  PARRY_ID,
-  PREPARATION_ID,
-  REGENERATION_ID,
-  SLASH_ID,
   STARTER_CARD_DEFINITIONS,
-  STARTER_LOADOUT,
   type CardDefinition,
   type CardDefinitionId,
 } from "@proximity/simulation";
 import { ENCOUNTER_ORDER } from "@/lib/simulation/encounters";
-
-// Authored deck states, indexed by number of completed encounters.
-// Each stage introduces mechanics unlocked by the preceding encounter.
-const DECK_PROGRESSION: readonly (readonly CardDefinitionId[])[] = [
-  // Stage 0 — starter: basic attacks, a block, a heal, a DoT, a buff
-  STARTER_LOADOUT.cardDefinitionIds,
-  // Stage 1 — after Shepherd's Dog: replace basic defense/heal with Parry and Berserk
-  [
-    SLASH_ID,
-    HEAVY_STRIKE_ID,
-    BATTLE_CRY_ID,
-    LACERATION_ID,
-    PARRY_ID,
-    BERSERK_ID,
-  ],
-  // Stage 2 — after Hunter: replace basics with Preparation and Regeneration
-  [
-    HEAVY_STRIKE_ID,
-    LACERATION_ID,
-    PARRY_ID,
-    BERSERK_ID,
-    PREPARATION_ID,
-    REGENERATION_ID,
-  ],
-  // Stage 3 — after Militiaman: replace aggression with the Feint/Exploit finesse pair
-  [
-    HEAVY_STRIKE_ID,
-    LACERATION_ID,
-    PARRY_ID,
-    PREPARATION_ID,
-    FEINT_ID,
-    EXPLOIT_ID,
-  ],
-];
 
 const INITIAL_UNLOCKED_CARD_IDS: ReadonlySet<CardDefinitionId> = new Set(
   STARTER_CARD_DEFINITIONS.keys(),
@@ -75,7 +30,6 @@ interface ProgressionState {
     CardDefinitionId,
     CardDefinition
   >;
-  readonly currentDeck: readonly CardDefinitionId[];
 }
 
 interface ProgressionContextValue extends ProgressionState {
@@ -98,7 +52,6 @@ export function ProgressionProvider({
     completedEncounterIds: new Set(),
     unlockedCardIds: INITIAL_UNLOCKED_CARD_IDS,
     unlockedCardDefinitions: INITIAL_UNLOCKED_CARD_DEFINITIONS,
-    currentDeck: STARTER_LOADOUT.cardDefinitionIds,
   });
 
   // An encounter is available if it is first in order, or the one before it is completed.
@@ -135,16 +88,10 @@ export function ProgressionProvider({
           if (def !== undefined) nextCardDefs.set(id, def);
         }
 
-        const deckStage = Math.min(
-          nextCompletedIds.size,
-          DECK_PROGRESSION.length - 1,
-        );
-
         return {
           completedEncounterIds: nextCompletedIds,
           unlockedCardIds: nextUnlockedIds,
           unlockedCardDefinitions: nextCardDefs,
-          currentDeck: DECK_PROGRESSION[deckStage]!,
         };
       });
     },

@@ -88,7 +88,7 @@ export function EncountersClient() {
                 key={id}
                 name={encounter.name}
                 status={status}
-                onSelect={() => router.push(`/combat/${id}`)}
+                onSelect={() => router.push(`/deck/${id}`)}
               />
             );
           })}

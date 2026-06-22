@@ -30,6 +30,20 @@ export class Engine {
     };
   }
 
+  public canExecuteAction(
+    state: GameState,
+    action: GameAction,
+    definition: MatchDefinition,
+  ): boolean {
+    const context = new ExecutionContext(state, action, definition);
+    try {
+      this.validateAction(context);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   public initializeGame(
     matchId: MatchId,
     definition: MatchDefinition,
