@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   EventType,
@@ -12,11 +12,10 @@ import {
   type CombatantId,
   type GameEvent,
 } from "@proximity/simulation";
-import { Section, Stack } from "@/components/ui";
+import { Stack } from "@/components/ui";
 import {
   CombatCard,
   CombatLogEntry,
-  ContextPanel,
   MatchOverlay,
   OpponentArea,
   PlayerArea,
@@ -31,7 +30,7 @@ import {
   PLAYER_COMBATANT_ID,
 } from "@/lib/simulation/match-factory";
 
-type PresentationPhase = "idle" | "player" | "ai";
+const EVENT_DELAY_MS = 150;
 
 interface CombatClientProps {
   readonly encounterId: string;
@@ -94,10 +93,11 @@ function eventAlignment(event: GameEvent): EntryAlignment {
       return event.targetId === PLAYER_COMBATANT_ID ? "player" : "opponent";
     case EventType.CombatantDefeated:
       return event.combatantId === PLAYER_COMBATANT_ID ? "player" : "opponent";
+    case EventType.CooldownChanged:
+      return event.targetId === PLAYER_COMBATANT_ID ? "player" : "opponent";
     case EventType.PlayerConceded:
     case EventType.MatchEnded:
     case EventType.TurnEnded:
-    case EventType.CooldownChanged:
       return "neutral";
   }
 }
@@ -190,8 +190,29 @@ function renderEvent(
         </CombatLogEntry>
       );
 
+    case EventType.CooldownChanged: {
+      const card = cardName(event.cardDefinitionId);
+      // Card became ready after being on cooldown.
+      if (event.previousCooldown > 0 && event.newCooldown === 0) {
+        return (
+          <CombatLogEntry key={index} align={align}>
+            {card} ready.
+          </CombatLogEntry>
+        );
+      }
+      // Cooldown extended by a card effect.
+      if (event.newCooldown > event.previousCooldown) {
+        return (
+          <CombatLogEntry key={index} align={align}>
+            {card} cooldown extended.
+          </CombatLogEntry>
+        );
+      }
+      // Mid-cooldown tick: already visible on the card; skip.
+      return null;
+    }
+
     case EventType.TurnEnded:
-    case EventType.CooldownChanged:
       return null;
   }
 }
@@ -210,17 +231,17 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   const { snapshot, playerPhaseEvents, aiPhaseEvents, playCard, reset } =
     useCombat(encounterId, definition, agent);
 
-  const [phase, setPhase] = useState<PresentationPhase>("idle");
-
-  const [hoveredCardId, setHoveredCardId] = useState<CardDefinitionId | null>(
-    null,
+  // Sequential playback state
+  const [revealedEvents, setRevealedEvents] = useState<readonly GameEvent[]>(
+    [],
   );
-  const hoveredCardDef =
-    hoveredCardId !== null
-      ? (definition.cardDefinitions.get(hoveredCardId) ?? null)
-      : null;
-
-  const feedRef = useRef<HTMLDivElement>(null);
+  const [revealedInBatch, setRevealedInBatch] = useState<readonly GameEvent[]>(
+    [],
+  );
+  const [playbackPhase, setPlaybackPhase] = useState<
+    "player" | "opponent" | null
+  >(null);
+  const [batchKey, setBatchKey] = useState(0);
 
   const playerState = snapshot.combatants.find(
     (cs) => cs.combatant.id === PLAYER_COMBATANT_ID,
@@ -233,22 +254,62 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   const isCompleted = snapshot.status === MatchStatus.Completed;
   const playerWon = isCompleted && opponentState.health <= 0;
   const roundNumber = Math.ceil(snapshot.turn.number / 2);
-  const canPlay = !isCompleted && phase === "idle";
+  const canPlay = !isCompleted && playbackPhase === null;
 
-  // Events that arrived during the current presentation phase — used only for feedback.
-  const currentPhaseEvents =
-    phase === "player"
-      ? playerPhaseEvents
-      : phase === "ai"
-        ? aiPhaseEvents
-        : [];
+  // Consume the ordered event stream from useCombat and reveal events one by one.
+  // Tracks the player/opponent boundary so the UI can label each phase.
+  useEffect(() => {
+    const playerBatch = [...playerPhaseEvents];
+    const aiBatch = [...aiPhaseEvents];
+    const totalPlayerEvents = playerBatch.length;
+    const allEvents = [...playerBatch, ...aiBatch];
 
-  const playerFeedback: PortraitFeedback = currentPhaseEvents.some(
+    if (allEvents.length === 0) return;
+
+    let index = 0;
+    let active = true;
+
+    function revealNext() {
+      if (!active) return;
+      const event = allEvents[index++];
+      const position = index - 1;
+
+      if (position === 0) {
+        // First event — initialise the batch.
+        setBatchKey((k) => k + 1);
+        setPlaybackPhase(totalPlayerEvents > 0 ? "player" : "opponent");
+        setRevealedInBatch([event]);
+      } else if (position === totalPlayerEvents && totalPlayerEvents > 0) {
+        // First AI event — transition to opponent phase.
+        setPlaybackPhase("opponent");
+        setRevealedInBatch((prev) => [...prev, event]);
+      } else {
+        setRevealedInBatch((prev) => [...prev, event]);
+      }
+
+      setRevealedEvents((prev) => [...prev, event]);
+
+      if (index < allEvents.length) {
+        setTimeout(revealNext, EVENT_DELAY_MS);
+      } else {
+        setPlaybackPhase(null);
+      }
+    }
+
+    setTimeout(revealNext, EVENT_DELAY_MS);
+
+    return () => {
+      active = false;
+    };
+  }, [playerPhaseEvents, aiPhaseEvents]);
+
+  // Portrait feedback: check revealed batch events for damage/healing targeting each combatant.
+  const playerFeedback: PortraitFeedback = revealedInBatch.some(
     (e) =>
       e.type === EventType.DamageDealt && e.targetId === PLAYER_COMBATANT_ID,
   )
     ? "damage"
-    : currentPhaseEvents.some(
+    : revealedInBatch.some(
           (e) =>
             e.type === EventType.HealingDone &&
             e.targetId === PLAYER_COMBATANT_ID,
@@ -258,13 +319,13 @@ export function CombatClient({ encounterId }: CombatClientProps) {
         ? "defeated"
         : null;
 
-  const opponentFeedback: PortraitFeedback = currentPhaseEvents.some(
+  const opponentFeedback: PortraitFeedback = revealedInBatch.some(
     (e) =>
       e.type === EventType.DamageDealt &&
       e.targetId === opponentState.combatant.id,
   )
     ? "damage"
-    : currentPhaseEvents.some(
+    : revealedInBatch.some(
           (e) =>
             e.type === EventType.HealingDone &&
             e.targetId === opponentState.combatant.id,
@@ -276,27 +337,15 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
   const handlePlayCard = (cardInstanceId: CardInstanceId) => {
     playCard(cardInstanceId);
-    setPhase("player");
-    setTimeout(() => {
-      setPhase("ai");
-      setTimeout(() => {
-        setPhase("idle");
-      }, 800);
-    }, 800);
   };
 
-  const displayedEvents = useMemo(
-    () =>
-      phase === "player"
-        ? playerPhaseEvents
-        : [...playerPhaseEvents, ...aiPhaseEvents],
-    [phase, playerPhaseEvents, aiPhaseEvents],
-  );
-
-  useEffect(() => {
-    const el = feedRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [displayedEvents]);
+  const handleReset = () => {
+    reset();
+    setRevealedEvents([]);
+    setRevealedInBatch([]);
+    setPlaybackPhase(null);
+    setBatchKey(0);
+  };
 
   return (
     <div className="bg-background text-foreground relative flex h-screen flex-col overflow-hidden">
@@ -314,28 +363,33 @@ export function CombatClient({ encounterId }: CombatClientProps) {
           name="Player"
           state={playerState}
           feedback={playerFeedback}
-          feedbackKey={phase}
+          feedbackKey={String(batchKey)}
         />
 
-        {/* Combat Feed — label pins at top, events scroll below */}
+        {/* Combat Feed — newest events stay at bottom, oldest fade out above */}
         <section className="flex flex-1 flex-col overflow-hidden">
           <div className="border-border shrink-0 border-b px-6 py-4">
             <p className="text-muted text-xs tracking-[0.3em] uppercase">
               Combat Feed
             </p>
           </div>
-          <div
-            ref={feedRef}
-            className="flex flex-1 flex-col gap-2 overflow-y-auto px-6 py-4"
-          >
-            {displayedEvents.length === 0 ? (
-              <p className="text-muted text-xs">No events yet.</p>
-            ) : (
-              displayedEvents.flatMap((event, i) => {
-                const node = renderEvent(event, i, encounter.name);
-                return node !== null ? [node] : [];
-              })
-            )}
+          <div className="relative flex-1 overflow-hidden">
+            {/* Gradient: events dissolve as they scroll off the top */}
+            <div className="from-background pointer-events-none absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b to-transparent" />
+            <div className="flex h-full flex-col-reverse gap-2 overflow-hidden px-6 pt-12 pb-4">
+              {revealedEvents.length === 0 ? (
+                <p className="text-muted text-xs">No events yet.</p>
+              ) : (
+                [...revealedEvents].reverse().flatMap((event, ri) => {
+                  const node = renderEvent(
+                    event,
+                    revealedEvents.length - 1 - ri,
+                    encounter.name,
+                  );
+                  return node !== null ? [node] : [];
+                })
+              )}
+            </div>
           </div>
         </section>
 
@@ -343,48 +397,42 @@ export function CombatClient({ encounterId }: CombatClientProps) {
           name={encounter.name}
           state={opponentState}
           feedback={opponentFeedback}
-          feedbackKey={phase}
+          feedbackKey={String(batchKey)}
         />
       </main>
 
-      {/* Player Hand */}
-      <section className="border-border shrink-0 border-t px-6 py-5">
-        <Section label="Player Hand" gap={3}>
-          {phase !== "idle" && !isCompleted && (
-            <p className="text-muted font-mono text-xs tracking-[0.3em] uppercase">
-              {phase === "player" ? "Player action" : "Opponent's response"}
-            </p>
-          )}
-          <Stack direction="row" gap={2} wrap>
-            {playerState.cards.map((card) => (
-              <CombatCard
-                key={card.instanceId}
-                definitionId={card.definitionId}
-                remainingCooldown={card.remainingCooldown}
-                isPlayable={card.remainingCooldown === 0 && canPlay}
-                onPlay={() => handlePlayCard(card.instanceId)}
-                onHoverStart={() => setHoveredCardId(card.definitionId)}
-                onHoverEnd={() => setHoveredCardId(null)}
-              />
-            ))}
-          </Stack>
-        </Section>
+      {/* Opponent phase indicator */}
+      {playbackPhase === "opponent" && !isCompleted && (
+        <div className="flex shrink-0 justify-center py-2">
+          <p className="text-muted font-mono text-xs tracking-[0.3em] uppercase">
+            Opponent acting.
+          </p>
+        </div>
+      )}
+
+      {/* Player Hand — h-32 peek strip; cards sit at -bottom-28 and hover up */}
+      <section className="relative z-10 h-32 shrink-0">
+        <div className="absolute inset-x-0 -bottom-28 flex justify-center gap-2">
+          {playerState.cards.map((card) => (
+            <CombatCard
+              key={card.instanceId}
+              cardDefinition={
+                definition.cardDefinitions.get(card.definitionId)!
+              }
+              remainingCooldown={card.remainingCooldown}
+              isPlayable={card.remainingCooldown === 0 && canPlay}
+              onPlay={() => handlePlayCard(card.instanceId)}
+            />
+          ))}
+        </div>
       </section>
 
-      {/* Context Area — shows hovered card detail or encounter info */}
-      <aside className="border-border shrink-0 border-t px-6 py-4">
-        <ContextPanel
-          cardDefinition={hoveredCardDef}
-          encounterName={encounter.name}
-        />
-      </aside>
-
-      {/* Match Overlay — deferred until presentation completes */}
-      {isCompleted && phase === "idle" && (
+      {/* Match Overlay — deferred until playback completes */}
+      {isCompleted && playbackPhase === null && (
         <MatchOverlay
           playerWon={playerWon}
           encounterName={encounter.name}
-          onReplay={reset}
+          onReplay={handleReset}
           onLeave={() => router.push("/encounters")}
         />
       )}

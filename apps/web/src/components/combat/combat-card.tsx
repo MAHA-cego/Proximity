@@ -1,5 +1,5 @@
-import type { CardDefinitionId } from "@proximity/simulation";
-import { Stack } from "@/components/ui";
+import type { CardDefinition, CardDefinitionId } from "@proximity/simulation";
+import { CardRules } from "./card-rules";
 
 function formatCardName(id: CardDefinitionId): string {
   return String(id)
@@ -9,66 +9,76 @@ function formatCardName(id: CardDefinitionId): string {
 }
 
 interface CombatCardProps {
-  readonly definitionId: CardDefinitionId;
+  readonly cardDefinition: CardDefinition;
   readonly remainingCooldown: number;
   readonly isPlayable: boolean;
   readonly onPlay: () => void;
-  readonly onHoverStart?: () => void;
-  readonly onHoverEnd?: () => void;
 }
 
 export function CombatCard({
-  definitionId,
+  cardDefinition,
   remainingCooldown,
   isPlayable,
   onPlay,
-  onHoverStart,
-  onHoverEnd,
 }: CombatCardProps) {
   const onCooldown = remainingCooldown > 0;
 
   return (
     <button
       type="button"
-      onClick={isPlayable ? onPlay : undefined}
+      onClick={
+        isPlayable
+          ? (e) => {
+              onPlay();
+              (e.currentTarget as HTMLButtonElement).blur();
+            }
+          : undefined
+      }
       aria-disabled={!isPlayable}
-      onMouseEnter={onHoverStart}
-      onMouseLeave={onHoverEnd}
-      onFocus={onHoverStart}
-      onBlur={onHoverEnd}
       className={[
-        "group w-28 text-left",
+        "group h-60 w-36 text-left",
+        "transition-transform duration-200",
+        "focus-within:-translate-y-28 hover:-translate-y-28",
         isPlayable ? "cursor-pointer" : "cursor-not-allowed opacity-50",
       ].join(" ")}
     >
       <div
         className={[
-          "flex flex-col border",
+          "flex h-full flex-col border",
           isPlayable
-            ? "bg-surface border-foreground group-hover:bg-surface-raised"
+            ? "bg-surface border-foreground"
             : "bg-surface border-border",
         ].join(" ")}
       >
-        {/* Placeholder artwork — replaced with illustration in production */}
-        <div className="bg-surface-raised h-20 w-full" />
+        {/* Card Name */}
+        <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
+          <p className="text-foreground truncate font-mono text-xs">
+            {formatCardName(cardDefinition.id)}
+          </p>
+        </div>
 
-        {/* Card info */}
-        <div className="border-border border-t px-3 py-2.5">
-          <Stack gap={1}>
-            <p
-              className={[
-                "font-mono text-xs",
-                isPlayable ? "text-foreground" : "text-muted",
-              ].join(" ")}
-            >
-              {formatCardName(definitionId)}
-            </p>
-            {onCooldown && (
-              <p className="text-muted font-mono text-xs">
-                Ready in {remainingCooldown}
-              </p>
-            )}
-          </Stack>
+        {/* Illustration */}
+        <div className="bg-surface-raised border-border h-24 w-full shrink-0 border-b" />
+
+        {/* Cooldown */}
+        <div className="border-border flex h-7 shrink-0 items-center border-b px-3">
+          <p
+            className={[
+              "font-mono text-xs",
+              onCooldown ? "text-crimson" : "text-muted",
+            ].join(" ")}
+          >
+            {onCooldown
+              ? `cd ${remainingCooldown}`
+              : cardDefinition.cooldown > 0
+                ? `cd ${cardDefinition.cooldown}`
+                : "—"}
+          </p>
+        </div>
+
+        {/* Rules */}
+        <div className="flex-1 overflow-hidden px-3 py-2">
+          <CardRules definition={cardDefinition} />
         </div>
       </div>
     </button>
