@@ -1,17 +1,13 @@
 interface TurnIndicatorProps {
-  readonly turnNumber: number;
-  readonly isPlayerTurn: boolean;
+  readonly roundNumber: number;
   readonly isCompleted: boolean;
 }
 
 export function TurnIndicator({
-  turnNumber,
-  isPlayerTurn,
+  roundNumber,
   isCompleted,
 }: TurnIndicatorProps) {
-  const label = isCompleted
-    ? "Match ended"
-    : `Turn ${turnNumber} — ${isPlayerTurn ? "Your turn" : "Opponent's turn"}`;
+  const label = isCompleted ? "Match ended" : `Round ${roundNumber}`;
 
   return (
     <p className="text-muted text-xs tracking-[0.3em] uppercase">{label}</p>

@@ -11,6 +11,7 @@ import {
   type RuntimeStatus,
 } from "../core";
 import type { ExecutionContext } from "../engine";
+import { EventType } from "../events";
 import { checkRequirement } from "./check-requirement";
 
 export function resolveEffects(
@@ -190,6 +191,12 @@ function dispatchEffect(
           ];
           context.replaceState({ ...state, combatants: afterParryConsume });
 
+          context.emit({
+            type: EventType.StatusRemoved,
+            targetId: target.combatant.id,
+            statusType: StatusType.Parry,
+          });
+
           const reflectActorIdx = context.state.combatants.findIndex(
             (cs) => cs.combatant.id === actorId,
           );
@@ -204,6 +211,12 @@ function dispatchEffect(
             context.replaceState({
               ...stateAfterParry,
               combatants: reflectedCombatants,
+            });
+            context.emit({
+              type: EventType.DamageDealt,
+              sourceId: target.combatant.id,
+              targetId: actorId,
+              amount: totalDamage,
             });
           }
           continue;
@@ -224,6 +237,14 @@ function dispatchEffect(
           ...state.combatants.slice(targetIndex + 1),
         ];
         context.replaceState({ ...state, combatants: updatedCombatants });
+        if (actualDamage > 0) {
+          context.emit({
+            type: EventType.DamageDealt,
+            sourceId: actorId,
+            targetId: target.combatant.id,
+            amount: actualDamage,
+          });
+        }
       }
       break;
     }
@@ -268,6 +289,7 @@ function dispatchEffect(
           (mc) => mc.combatant.id === target.combatant.id,
         );
         const maxHealth = matchCombatant!.combatant.maxHealth;
+        const effectiveHeal = Math.min(totalHeal, maxHealth - target.health);
         const updatedCombatant = {
           ...target,
           health: Math.min(target.health + totalHeal, maxHealth),
@@ -278,6 +300,14 @@ function dispatchEffect(
           ...state.combatants.slice(targetIndex + 1),
         ];
         context.replaceState({ ...state, combatants: updatedCombatants });
+        if (effectiveHeal > 0) {
+          context.emit({
+            type: EventType.HealingDone,
+            sourceId: actorId,
+            targetId: target.combatant.id,
+            amount: effectiveHeal,
+          });
+        }
       }
       break;
     }
@@ -288,10 +318,9 @@ function dispatchEffect(
       const { state } = context;
       const combatant = state.combatants[cardTargetCombatantIndex];
       const card = combatant.cards[cardTargetCardIndex];
-      const updatedCard = {
-        ...card,
-        remainingCooldown: Math.max(0, card.remainingCooldown - effect.amount),
-      };
+      const previousCooldown = card.remainingCooldown;
+      const newCooldown = Math.max(0, card.remainingCooldown - effect.amount);
+      const updatedCard = { ...card, remainingCooldown: newCooldown };
       const updatedCards = [
         ...combatant.cards.slice(0, cardTargetCardIndex),
         updatedCard,
@@ -304,6 +333,15 @@ function dispatchEffect(
         ...state.combatants.slice(cardTargetCombatantIndex + 1),
       ];
       context.replaceState({ ...state, combatants: updatedCombatants });
+      if (previousCooldown !== newCooldown) {
+        context.emit({
+          type: EventType.CooldownChanged,
+          targetId: combatant.combatant.id,
+          cardDefinitionId: card.definitionId,
+          previousCooldown,
+          newCooldown,
+        });
+      }
       break;
     }
 
@@ -313,6 +351,7 @@ function dispatchEffect(
       const { state } = context;
       const combatant = state.combatants[cardTargetCombatantIndex];
       const card = combatant.cards[cardTargetCardIndex];
+      const previousCooldown = card.remainingCooldown;
       const updatedCard = { ...card, remainingCooldown: 0 };
       const updatedCards = [
         ...combatant.cards.slice(0, cardTargetCardIndex),
@@ -326,6 +365,15 @@ function dispatchEffect(
         ...state.combatants.slice(cardTargetCombatantIndex + 1),
       ];
       context.replaceState({ ...state, combatants: updatedCombatants });
+      if (previousCooldown !== 0) {
+        context.emit({
+          type: EventType.CooldownChanged,
+          targetId: combatant.combatant.id,
+          cardDefinitionId: card.definitionId,
+          previousCooldown,
+          newCooldown: 0,
+        });
+      }
       break;
     }
 
@@ -335,10 +383,9 @@ function dispatchEffect(
       const { state } = context;
       const combatant = state.combatants[cardTargetCombatantIndex];
       const card = combatant.cards[cardTargetCardIndex];
-      const updatedCard = {
-        ...card,
-        remainingCooldown: card.remainingCooldown + effect.amount,
-      };
+      const previousCooldown = card.remainingCooldown;
+      const newCooldown = card.remainingCooldown + effect.amount;
+      const updatedCard = { ...card, remainingCooldown: newCooldown };
       const updatedCards = [
         ...combatant.cards.slice(0, cardTargetCardIndex),
         updatedCard,
@@ -351,6 +398,13 @@ function dispatchEffect(
         ...state.combatants.slice(cardTargetCombatantIndex + 1),
       ];
       context.replaceState({ ...state, combatants: updatedCombatants });
+      context.emit({
+        type: EventType.CooldownChanged,
+        targetId: combatant.combatant.id,
+        cardDefinitionId: card.definitionId,
+        previousCooldown,
+        newCooldown,
+      });
       break;
     }
 
@@ -376,6 +430,13 @@ function dispatchEffect(
           ...state.combatants.slice(targetIndex + 1),
         ];
         context.replaceState({ ...state, combatants: updatedCombatants });
+        context.emit({
+          type: EventType.ModifierApplied,
+          sourceId: actorId,
+          targetId: target.combatant.id,
+          modifierType: effect.modifierType,
+          amount: effect.amount,
+        });
       }
       break;
     }
@@ -406,6 +467,14 @@ function dispatchEffect(
           ...state.combatants.slice(targetIndex + 1),
         ];
         context.replaceState({ ...state, combatants: updatedCombatants });
+        context.emit({
+          type: EventType.StatusApplied,
+          sourceId: actorId,
+          targetId: target.combatant.id,
+          statusType: effect.statusType,
+          amount: effect.amount,
+          duration: effect.duration,
+        });
       }
       break;
     }
@@ -414,6 +483,9 @@ function dispatchEffect(
       for (const targetIndex of targetIndices) {
         const { state } = context;
         const target = state.combatants[targetIndex];
+        const hasStatus = target.statuses.some(
+          (s) => s.type === effect.statusType,
+        );
         const updatedCombatant = {
           ...target,
           statuses: target.statuses.filter((s) => s.type !== effect.statusType),
@@ -424,6 +496,13 @@ function dispatchEffect(
           ...state.combatants.slice(targetIndex + 1),
         ];
         context.replaceState({ ...state, combatants: updatedCombatants });
+        if (hasStatus) {
+          context.emit({
+            type: EventType.StatusRemoved,
+            targetId: target.combatant.id,
+            statusType: effect.statusType,
+          });
+        }
       }
       break;
     }

@@ -2,6 +2,7 @@ import { ActionType } from "../actions";
 import { AbilityTrigger, StatusType, TargetingType } from "../core";
 import { resolveEffects } from "../effects";
 import type { ExecutionContext } from "../engine/execution-context";
+import { EventType } from "../events";
 
 import type { GameSystem } from "./game-system";
 
@@ -31,6 +32,12 @@ export class StatusSystem implements GameSystem {
             ...state.combatants.slice(combatantIndex + 1),
           ];
           context.replaceState({ ...state, combatants: updatedCombatants });
+          context.emit({
+            type: EventType.DamageDealt,
+            sourceId: activeCombatantId,
+            targetId: activeCombatantId,
+            amount: status.amount,
+          });
           break;
         }
 
@@ -43,6 +50,12 @@ export class StatusSystem implements GameSystem {
             ...state.combatants.slice(combatantIndex + 1),
           ];
           context.replaceState({ ...state, combatants: updatedCombatants });
+          context.emit({
+            type: EventType.DamageDealt,
+            sourceId: activeCombatantId,
+            targetId: activeCombatantId,
+            amount: status.amount,
+          });
           break;
         }
 
@@ -65,6 +78,10 @@ export class StatusSystem implements GameSystem {
             (mc) => mc.combatant.id === activeCombatantId,
           )!;
           const maxHealth = matchCombatant.combatant.maxHealth;
+          const effectiveHeal = Math.min(
+            status.amount,
+            maxHealth - target.health,
+          );
           const updatedCombatants = [
             ...state.combatants.slice(0, combatantIndex),
             {
@@ -74,6 +91,14 @@ export class StatusSystem implements GameSystem {
             ...state.combatants.slice(combatantIndex + 1),
           ];
           context.replaceState({ ...state, combatants: updatedCombatants });
+          if (effectiveHeal > 0) {
+            context.emit({
+              type: EventType.HealingDone,
+              sourceId: activeCombatantId,
+              targetId: activeCombatantId,
+              amount: effectiveHeal,
+            });
+          }
           break;
         }
 
@@ -92,6 +117,17 @@ export class StatusSystem implements GameSystem {
 
     const { state } = context;
     const latestCombatant = state.combatants[combatantIndex];
+
+    for (const status of latestCombatant.statuses) {
+      if (status.remainingDuration === 1) {
+        context.emit({
+          type: EventType.StatusRemoved,
+          targetId: activeCombatantId,
+          statusType: status.type,
+        });
+      }
+    }
+
     const updatedStatuses = latestCombatant.statuses
       .map((s) => ({ ...s, remainingDuration: s.remainingDuration - 1 }))
       .filter((s) => s.remainingDuration > 0);

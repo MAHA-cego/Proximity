@@ -60,6 +60,10 @@ describe("MatchSystem", () => {
 
     expect(result.events).toEqual([
       {
+        type: EventType.PlayerConceded,
+        combatantId: playerOne.id,
+      },
+      {
         type: EventType.MatchEnded,
         winnerId: playerTwo.id,
         loserId: playerOne.id,
@@ -115,6 +119,21 @@ describe("MatchSystem", () => {
     expect(result.state.status).toBe(MatchStatus.Completed);
 
     expect(result.events).toEqual([
+      {
+        type: EventType.CardPlayed,
+        actorId: playerOne.id,
+        cardDefinitionId: cardA.id,
+      },
+      {
+        type: EventType.DamageDealt,
+        sourceId: playerOne.id,
+        targetId: playerTwo.id,
+        amount: 5,
+      },
+      {
+        type: EventType.CombatantDefeated,
+        combatantId: playerTwo.id,
+      },
       {
         type: EventType.MatchEnded,
         winnerId: playerOne.id,

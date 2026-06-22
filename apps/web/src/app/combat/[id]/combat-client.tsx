@@ -1,11 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
-import { EventType, MatchStatus } from "@proximity/simulation";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  EventType,
+  MatchStatus,
+  type CardDefinitionId,
+  type CardInstanceId,
+} from "@proximity/simulation";
 import { Section, Stack } from "@/components/ui";
 import {
   CombatCard,
   CombatLogEntry,
+  ContextPanel,
   MatchOverlay,
   OpponentArea,
   PlayerArea,
@@ -17,6 +24,8 @@ import {
   createMatchDefinition,
   PLAYER_COMBATANT_ID,
 } from "@/lib/simulation/match-factory";
+
+type PresentationPhase = "idle" | "player" | "ai";
 
 interface CombatClientProps {
   readonly encounterId: string;
@@ -32,11 +41,19 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
   const agent = useMemo(() => encounter.createAgent(), [encounter]);
 
-  const { snapshot, lastEvents, playCard } = useCombat(
-    encounterId,
-    definition,
-    agent,
+  const router = useRouter();
+  const { snapshot, playerPhaseEvents, aiPhaseEvents, playCard, reset } =
+    useCombat(encounterId, definition, agent);
+
+  const [phase, setPhase] = useState<PresentationPhase>("idle");
+
+  const [hoveredCardId, setHoveredCardId] = useState<CardDefinitionId | null>(
+    null,
   );
+  const hoveredCardDef =
+    hoveredCardId !== null
+      ? (definition.cardDefinitions.get(hoveredCardId) ?? null)
+      : null;
 
   const playerState = snapshot.combatants.find(
     (cs) => cs.combatant.id === PLAYER_COMBATANT_ID,
@@ -47,9 +64,25 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   )!;
 
   const isCompleted = snapshot.status === MatchStatus.Completed;
-  const isPlayerTurn =
-    snapshot.turn.activeCombatantId === PLAYER_COMBATANT_ID && !isCompleted;
   const playerWon = isCompleted && opponentState.health <= 0;
+  const roundNumber = Math.ceil(snapshot.turn.number / 2);
+  const canPlay = !isCompleted && phase === "idle";
+
+  const handlePlayCard = (cardInstanceId: CardInstanceId) => {
+    playCard(cardInstanceId);
+    setPhase("player");
+    setTimeout(() => {
+      setPhase("ai");
+      setTimeout(() => {
+        setPhase("idle");
+      }, 800);
+    }, 800);
+  };
+
+  const displayedEvents =
+    phase === "player"
+      ? playerPhaseEvents
+      : [...playerPhaseEvents, ...aiPhaseEvents];
 
   return (
     <div className="bg-background text-foreground relative flex h-screen flex-col overflow-hidden">
@@ -57,11 +90,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       <header className="border-border shrink-0 border-b px-6 py-4">
         <Stack direction="row" align="center" justify="between">
           <p className="text-foreground font-mono text-sm">{encounter.name}</p>
-          <TurnIndicator
-            turnNumber={snapshot.turn.number}
-            isPlayerTurn={isPlayerTurn}
-            isCompleted={isCompleted}
-          />
+          <TurnIndicator roundNumber={roundNumber} isCompleted={isCompleted} />
         </Stack>
       </header>
 
@@ -77,26 +106,25 @@ export function CombatClient({ encounterId }: CombatClientProps) {
             </p>
           </div>
           <Stack gap={2} className="flex-1 overflow-y-auto px-6 py-4">
-            {lastEvents.length === 0 ? (
+            {displayedEvents.length === 0 ? (
               <p className="text-muted text-xs">No events yet.</p>
             ) : (
-              lastEvents.map((event, i) => {
-                let text: string;
+              displayedEvents.flatMap((event, i) => {
                 switch (event.type) {
-                  case EventType.TurnEnded:
-                    text = `${event.combatantId === PLAYER_COMBATANT_ID ? "Player" : encounter.name} ended their turn.`;
-                    break;
-                  case EventType.MatchEnded:
-                    text =
+                  case EventType.MatchEnded: {
+                    const text =
                       event.winnerId === PLAYER_COMBATANT_ID
                         ? `Player wins. ${encounter.name} has been defeated.`
                         : `${encounter.name} wins. Player has been defeated.`;
-                    break;
-                  case EventType.PlayerConceded:
-                    text = `${event.combatantId === PLAYER_COMBATANT_ID ? "Player" : encounter.name} conceded.`;
-                    break;
+                    return [<CombatLogEntry key={i} text={text} />];
+                  }
+                  case EventType.PlayerConceded: {
+                    const text = `${event.combatantId === PLAYER_COMBATANT_ID ? "Player" : encounter.name} conceded.`;
+                    return [<CombatLogEntry key={i} text={text} />];
+                  }
+                  default:
+                    return [];
                 }
-                return <CombatLogEntry key={i} text={text} />;
               })
             )}
           </Stack>
@@ -108,28 +136,43 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       {/* Player Hand */}
       <section className="border-border shrink-0 border-t px-6 py-5">
         <Section label="Player Hand" gap={3}>
+          {phase !== "idle" && !isCompleted && (
+            <p className="text-muted font-mono text-xs tracking-[0.3em] uppercase">
+              {phase === "player" ? "Player action" : "Opponent's response"}
+            </p>
+          )}
           <Stack direction="row" gap={2} wrap>
             {playerState.cards.map((card) => (
               <CombatCard
                 key={card.instanceId}
                 definitionId={card.definitionId}
                 remainingCooldown={card.remainingCooldown}
-                isPlayable={card.remainingCooldown === 0 && isPlayerTurn}
-                onPlay={() => playCard(card.instanceId)}
+                isPlayable={card.remainingCooldown === 0 && canPlay}
+                onPlay={() => handlePlayCard(card.instanceId)}
+                onHoverStart={() => setHoveredCardId(card.definitionId)}
+                onHoverEnd={() => setHoveredCardId(null)}
               />
             ))}
           </Stack>
         </Section>
       </section>
 
-      {/* Context Area — tooltip and card detail target */}
-      <aside className="border-border shrink-0 border-t px-6 py-2">
-        <Section label="Context" />
+      {/* Context Area — shows hovered card detail or encounter info */}
+      <aside className="border-border shrink-0 border-t px-6 py-4">
+        <ContextPanel
+          cardDefinition={hoveredCardDef}
+          encounterName={encounter.name}
+        />
       </aside>
 
-      {/* Match Overlay — rendered on top when match completes */}
-      {isCompleted && (
-        <MatchOverlay playerWon={playerWon} encounterName={encounter.name} />
+      {/* Match Overlay — deferred until presentation completes */}
+      {isCompleted && phase === "idle" && (
+        <MatchOverlay
+          playerWon={playerWon}
+          encounterName={encounter.name}
+          onReplay={reset}
+          onLeave={() => router.push("/encounters")}
+        />
       )}
     </div>
   );

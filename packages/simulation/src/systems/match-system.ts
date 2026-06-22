@@ -27,6 +27,11 @@ export class MatchSystem implements GameSystem {
       });
 
       context.emit({
+        type: EventType.PlayerConceded,
+        combatantId: context.action.actorId,
+      });
+
+      context.emit({
         type: EventType.MatchEnded,
         winnerId: winner.combatant.id,
         loserId: context.action.actorId,
@@ -50,6 +55,11 @@ export class MatchSystem implements GameSystem {
     context.replaceState({
       ...context.state,
       status: MatchStatus.Completed,
+    });
+
+    context.emit({
+      type: EventType.CombatantDefeated,
+      combatantId: defeated.combatant.id,
     });
 
     context.emit({

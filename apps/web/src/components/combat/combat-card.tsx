@@ -13,6 +13,8 @@ interface CombatCardProps {
   readonly remainingCooldown: number;
   readonly isPlayable: boolean;
   readonly onPlay: () => void;
+  readonly onHoverStart?: () => void;
+  readonly onHoverEnd?: () => void;
 }
 
 export function CombatCard({
@@ -20,22 +22,31 @@ export function CombatCard({
   remainingCooldown,
   isPlayable,
   onPlay,
+  onHoverStart,
+  onHoverEnd,
 }: CombatCardProps) {
   const onCooldown = remainingCooldown > 0;
 
   return (
     <button
-      onClick={onPlay}
-      disabled={!isPlayable}
+      type="button"
+      onClick={isPlayable ? onPlay : undefined}
+      aria-disabled={!isPlayable}
+      onMouseEnter={onHoverStart}
+      onMouseLeave={onHoverEnd}
+      onFocus={onHoverStart}
+      onBlur={onHoverEnd}
       className={[
-        "w-28 text-left transition-opacity",
+        "group w-28 text-left",
         isPlayable ? "cursor-pointer" : "cursor-not-allowed opacity-50",
       ].join(" ")}
     >
       <div
         className={[
-          "bg-surface flex flex-col border",
-          isPlayable ? "border-foreground" : "border-border",
+          "flex flex-col border",
+          isPlayable
+            ? "bg-surface border-foreground group-hover:bg-surface-raised"
+            : "bg-surface border-border",
         ].join(" ")}
       >
         {/* Placeholder artwork — replaced with illustration in production */}
@@ -54,7 +65,7 @@ export function CombatCard({
             </p>
             {onCooldown && (
               <p className="text-muted font-mono text-xs">
-                {remainingCooldown} turn{remainingCooldown !== 1 ? "s" : ""}
+                Ready in {remainingCooldown}
               </p>
             )}
           </Stack>

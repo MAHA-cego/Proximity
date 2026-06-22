@@ -16,13 +16,16 @@ import type { AiAgent } from "@proximity/ai";
 
 interface CombatState {
   readonly snapshot: GameState;
-  readonly lastEvents: readonly GameEvent[];
+  readonly playerPhaseEvents: readonly GameEvent[];
+  readonly aiPhaseEvents: readonly GameEvent[];
 }
 
 export interface CombatControls {
   readonly snapshot: GameState;
-  readonly lastEvents: readonly GameEvent[];
+  readonly playerPhaseEvents: readonly GameEvent[];
+  readonly aiPhaseEvents: readonly GameEvent[];
   readonly playCard: (cardInstanceId: CardInstanceId) => void;
+  readonly reset: () => void;
 }
 
 export function useCombat(
@@ -37,7 +40,8 @@ export function useCombat(
       `${encounterId}-${Date.now()}` as MatchId,
       definition,
     ),
-    lastEvents: [],
+    playerPhaseEvents: [],
+    aiPhaseEvents: [],
   }));
 
   const playCard = useCallback(
@@ -46,7 +50,8 @@ export function useCombat(
         if (prev.snapshot.status !== MatchStatus.InProgress) return prev;
 
         let snapshot = prev.snapshot;
-        const events: GameEvent[] = [];
+        const playerEvents: GameEvent[] = [];
+        const aiEvents: GameEvent[] = [];
         const actorId = snapshot.turn.activeCombatantId;
 
         // Player plays their chosen card.
@@ -55,11 +60,15 @@ export function useCombat(
           { type: ActionType.UseCard, actorId, cardInstanceId },
           definition,
         );
-        events.push(...useResult.events);
+        playerEvents.push(...useResult.events);
         snapshot = useResult.state;
 
         if (snapshot.status === MatchStatus.Completed) {
-          return { snapshot, lastEvents: events };
+          return {
+            snapshot,
+            playerPhaseEvents: playerEvents,
+            aiPhaseEvents: aiEvents,
+          };
         }
 
         // Player ends their turn.
@@ -68,7 +77,7 @@ export function useCombat(
           { type: ActionType.EndTurn, actorId },
           definition,
         );
-        events.push(...playerEndResult.events);
+        playerEvents.push(...playerEndResult.events);
         snapshot = playerEndResult.state;
 
         // Drive all AI turns until a human turn begins or the match ends.
@@ -83,7 +92,7 @@ export function useCombat(
           const aiAction = agent.selectAction(snapshot, definition);
 
           const aiResult = engine.executeAction(snapshot, aiAction, definition);
-          events.push(...aiResult.events);
+          aiEvents.push(...aiResult.events);
           snapshot = aiResult.state;
 
           if (snapshot.status === MatchStatus.Completed) break;
@@ -95,16 +104,37 @@ export function useCombat(
               { type: ActionType.EndTurn, actorId: aiActorId },
               definition,
             );
-            events.push(...aiEndResult.events);
+            aiEvents.push(...aiEndResult.events);
             snapshot = aiEndResult.state;
           }
         }
 
-        return { snapshot, lastEvents: events };
+        return {
+          snapshot,
+          playerPhaseEvents: playerEvents,
+          aiPhaseEvents: aiEvents,
+        };
       });
     },
     [engine, definition, agent],
   );
 
-  return { snapshot: state.snapshot, lastEvents: state.lastEvents, playCard };
+  const reset = useCallback(() => {
+    setState({
+      snapshot: engine.initializeGame(
+        `${encounterId}-${Date.now()}` as MatchId,
+        definition,
+      ),
+      playerPhaseEvents: [],
+      aiPhaseEvents: [],
+    });
+  }, [engine, encounterId, definition]);
+
+  return {
+    snapshot: state.snapshot,
+    playerPhaseEvents: state.playerPhaseEvents,
+    aiPhaseEvents: state.aiPhaseEvents,
+    playCard,
+    reset,
+  };
 }

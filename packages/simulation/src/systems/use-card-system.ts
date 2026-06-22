@@ -2,6 +2,7 @@ import { ActionType } from "../actions";
 import { AbilityTrigger } from "../core";
 import { dispatchTrigger } from "../effects";
 import type { ExecutionContext } from "../engine/execution-context";
+import { EventType } from "../events";
 
 import type { GameSystem } from "./game-system";
 
@@ -44,6 +45,12 @@ export class UseCardSystem implements GameSystem {
     ];
 
     context.replaceState({ ...state, combatants: updatedCombatants });
+
+    context.emit({
+      type: EventType.CardPlayed,
+      actorId: action.actorId,
+      cardDefinitionId: cardDefinition.id,
+    });
 
     dispatchTrigger(context, AbilityTrigger.OnUse, cardDefinition.abilities);
 

@@ -1,5 +1,6 @@
 export { CombatCard } from "./combat-card";
 export { CombatLogEntry } from "./combat-log-entry";
+export { ContextPanel } from "./context-panel";
 export { HealthBar } from "./health-bar";
 export { MatchOverlay } from "./match-overlay";
 export { ModifierBadge } from "./modifier-badge";

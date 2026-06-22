@@ -5,6 +5,7 @@ import {
   ActionType,
   createEngine,
   createGame,
+  EventType,
   IllegalActionError,
   InvalidActionError,
   TargetingType,
@@ -69,7 +70,13 @@ describe("UseCardSystem", () => {
 
     expect(result.state.combatants[0].cards[0].remainingCooldown).toBe(3);
 
-    expect(result.events).toEqual([]);
+    expect(result.events).toEqual([
+      {
+        type: EventType.CardPlayed,
+        actorId: playerOne.id,
+        cardDefinitionId: cardA.id,
+      },
+    ]);
 
     expect(state.combatants[0].cards[0].remainingCooldown).toBe(0);
   });
