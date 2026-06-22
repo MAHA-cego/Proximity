@@ -129,6 +129,7 @@ describe("MatchSystem", () => {
         sourceId: playerOne.id,
         targetId: playerTwo.id,
         amount: 5,
+        cause: { kind: "card", cardId: cardA.id },
       },
       {
         type: EventType.CombatantDefeated,

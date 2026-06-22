@@ -52,7 +52,13 @@ export class UseCardSystem implements GameSystem {
       cardDefinitionId: cardDefinition.id,
     });
 
-    dispatchTrigger(context, AbilityTrigger.OnUse, cardDefinition.abilities);
+    dispatchTrigger(
+      context,
+      AbilityTrigger.OnUse,
+      cardDefinition.abilities,
+      undefined,
+      cardDefinition.id,
+    );
 
     const playedCardDefinitionId = cardDefinition.id;
     for (const otherCombatantState of context.state.combatants) {

@@ -74,15 +74,30 @@ class CorruptedHunterDoctrine implements AiAgent {
     const selfHealth = actorState.health;
     const maxHealth = actorState.combatant.maxHealth;
 
-    // Emergency: life is at risk — use Recover before anything else
+    // Emergency: life is at risk
     if (selfHealth <= maxHealth * 0.4) {
+      const hasRegeneration = actorState.statuses.some(
+        (s) => s.type === StatusType.Regeneration,
+      );
+      if (hasRegeneration) {
+        // Already healing — use the window to fight back rather than stack more defence
+        return [
+          HEAVY_STRIKE_ID,
+          RECOVER_ID,
+          SLASH_ID,
+          PREPARATION_ID,
+          GUARD_ID,
+          REGENERATION_ID,
+        ];
+      }
+      // Not yet recovering — establish it first, but hit back immediately after
       return [
         RECOVER_ID,
         REGENERATION_ID,
-        GUARD_ID,
         HEAVY_STRIKE_ID,
-        PREPARATION_ID,
         SLASH_ID,
+        GUARD_ID,
+        PREPARATION_ID,
       ];
     }
 
@@ -144,13 +159,13 @@ class CorruptedHunterDoctrine implements AiAgent {
       ];
     }
 
-    // Default: patient positioning — prepare before striking, heal before panicking
+    // Default: patient positioning — prepare before striking, Slash fills every gap
     return [
       PREPARATION_ID,
       HEAVY_STRIKE_ID,
+      SLASH_ID,
       REGENERATION_ID,
       GUARD_ID,
-      SLASH_ID,
       RECOVER_ID,
     ];
   }

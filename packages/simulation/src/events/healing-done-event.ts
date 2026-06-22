@@ -1,5 +1,6 @@
 import type { CombatantId } from "../core";
 import { EventType } from "./event-type";
+import type { EffectCause } from "./effect-cause";
 import type { GameEventBase } from "./game-event-base";
 
 export interface HealingDoneEvent extends GameEventBase {
@@ -7,4 +8,5 @@ export interface HealingDoneEvent extends GameEventBase {
   readonly sourceId: CombatantId;
   readonly targetId: CombatantId;
   readonly amount: number;
+  readonly cause?: EffectCause;
 }

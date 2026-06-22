@@ -6,6 +6,7 @@ import {
   checkRequirement,
   HEAVY_STRIKE_ID,
   LACERATION_ID,
+  ModifierType,
   PARRY_ID,
   SLASH_ID,
   StatusType,
@@ -50,8 +51,16 @@ class CorruptedShepherdsDogDoctrine implements AiAgent {
     const isBerserkActive = actorState.statuses.some(
       (s) => s.type === StatusType.Berserk,
     );
+    const hasDamageModifier = actorState.modifiers.some(
+      (m) => m.type === ModifierType.Damage,
+    );
 
-    const priority = this.selectPriority(state, actorState, isBerserkActive);
+    const priority = this.selectPriority(
+      state,
+      actorState,
+      isBerserkActive,
+      hasDamageModifier,
+    );
 
     for (const cardId of priority) {
       const card = playable.find((c) => c.definitionId === cardId);
@@ -71,10 +80,11 @@ class CorruptedShepherdsDogDoctrine implements AiAgent {
     state: GameState,
     actorState: GameState["combatants"][number],
     isBerserkActive: boolean,
+    hasDamageModifier: boolean,
   ): readonly CardDefinitionId[] {
     if (isBerserkActive) {
-      // Maximize damage output; Parry never used during Berserk
-      return [HEAVY_STRIKE_ID, BATTLE_CRY_ID, SLASH_ID, LACERATION_ID];
+      // During Berserk: attack immediately; BattleCry only if every strike is on cooldown
+      return [HEAVY_STRIKE_ID, SLASH_ID, LACERATION_ID, BATTLE_CRY_ID];
     }
 
     const turnNumber = state.turn.number;
@@ -85,18 +95,18 @@ class CorruptedShepherdsDogDoctrine implements AiAgent {
       return hesitate
         ? [
             HEAVY_STRIKE_ID,
-            BATTLE_CRY_ID,
             SLASH_ID,
             LACERATION_ID,
+            BATTLE_CRY_ID,
             BERSERK_ID,
             PARRY_ID,
           ]
         : [
             BERSERK_ID,
             HEAVY_STRIKE_ID,
-            BATTLE_CRY_ID,
             SLASH_ID,
             LACERATION_ID,
+            BATTLE_CRY_ID,
             PARRY_ID,
           ];
     }
@@ -109,12 +119,22 @@ class CorruptedShepherdsDogDoctrine implements AiAgent {
     );
 
     if (enemyHasBleeding) {
-      // Bleeding established; maximize damage to shorten the fight
+      // Bleeding is ticking — press every attack; BattleCry only when nothing else is ready
+      // and no modifier is already waiting to be consumed
+      if (hasDamageModifier) {
+        return [
+          HEAVY_STRIKE_ID,
+          LACERATION_ID,
+          SLASH_ID,
+          PARRY_ID,
+          BATTLE_CRY_ID,
+        ];
+      }
       return [
         HEAVY_STRIKE_ID,
-        BATTLE_CRY_ID,
-        SLASH_ID,
         LACERATION_ID,
+        SLASH_ID,
+        BATTLE_CRY_ID,
         PARRY_ID,
       ];
     }
@@ -130,8 +150,17 @@ class CorruptedShepherdsDogDoctrine implements AiAgent {
       ];
     }
 
-    // Mid-game: maintain aggressive momentum
-    return [BATTLE_CRY_ID, HEAVY_STRIKE_ID, LACERATION_ID, SLASH_ID, PARRY_ID];
+    // Mid-game: attack with every available strike; BattleCry only as a filler
+    if (hasDamageModifier) {
+      return [
+        HEAVY_STRIKE_ID,
+        LACERATION_ID,
+        SLASH_ID,
+        PARRY_ID,
+        BATTLE_CRY_ID,
+      ];
+    }
+    return [HEAVY_STRIKE_ID, LACERATION_ID, SLASH_ID, BATTLE_CRY_ID, PARRY_ID];
   }
 }
 

@@ -11,7 +11,7 @@ import {
   type RuntimeStatus,
 } from "../core";
 import type { ExecutionContext } from "../engine";
-import { EventType } from "../events";
+import { EventType, type EffectCause } from "../events";
 import { checkRequirement } from "./check-requirement";
 
 export function resolveEffects(
@@ -217,6 +217,7 @@ function dispatchEffect(
               sourceId: target.combatant.id,
               targetId: actorId,
               amount: totalDamage,
+              cause: { kind: "status", statusType: StatusType.Parry },
             });
           }
           continue;
@@ -238,11 +239,16 @@ function dispatchEffect(
         ];
         context.replaceState({ ...state, combatants: updatedCombatants });
         if (actualDamage > 0) {
+          const damageCause: EffectCause | undefined =
+            triggeredByCardId !== undefined
+              ? { kind: "card", cardId: triggeredByCardId }
+              : undefined;
           context.emit({
             type: EventType.DamageDealt,
             sourceId: actorId,
             targetId: target.combatant.id,
             amount: actualDamage,
+            cause: damageCause,
           });
         }
       }
@@ -301,11 +307,16 @@ function dispatchEffect(
         ];
         context.replaceState({ ...state, combatants: updatedCombatants });
         if (effectiveHeal > 0) {
+          const healCause: EffectCause | undefined =
+            triggeredByCardId !== undefined
+              ? { kind: "card", cardId: triggeredByCardId }
+              : undefined;
           context.emit({
             type: EventType.HealingDone,
             sourceId: actorId,
             targetId: target.combatant.id,
             amount: effectiveHeal,
+            cause: healCause,
           });
         }
       }

@@ -2,8 +2,8 @@ import { ModifierType } from "@proximity/simulation";
 import type { RuntimeModifier } from "@proximity/simulation";
 
 const MODIFIER_COLORS: Record<ModifierType, string> = {
-  [ModifierType.Damage]: "border-crimson text-crimson",
-  [ModifierType.DamageMultiplier]: "border-crimson text-crimson",
+  [ModifierType.Damage]: "border-amber text-amber",
+  [ModifierType.DamageMultiplier]: "border-amber text-amber",
   [ModifierType.Heal]: "border-emerald text-emerald",
 };
 

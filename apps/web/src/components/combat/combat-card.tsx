@@ -12,6 +12,7 @@ interface CombatCardProps {
   readonly cardDefinition: CardDefinition;
   readonly remainingCooldown: number;
   readonly isPlayable: boolean;
+  readonly lockedByRequirements: boolean;
   readonly onPlay: () => void;
 }
 
@@ -19,6 +20,7 @@ export function CombatCard({
   cardDefinition,
   remainingCooldown,
   isPlayable,
+  lockedByRequirements,
   onPlay,
 }: CombatCardProps) {
   const onCooldown = remainingCooldown > 0;
@@ -26,20 +28,17 @@ export function CombatCard({
   return (
     <button
       type="button"
-      onClick={
-        isPlayable
-          ? (e) => {
-              onPlay();
-              (e.currentTarget as HTMLButtonElement).blur();
-            }
-          : undefined
-      }
+      onClick={(e) => {
+        if (isPlayable) onPlay();
+        (e.currentTarget as HTMLButtonElement).blur();
+      }}
       aria-disabled={!isPlayable}
       className={[
         "group h-60 w-36 text-left",
         "transition-transform duration-200",
-        "focus-within:-translate-y-28 hover:-translate-y-28",
-        isPlayable ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+        isPlayable
+          ? "cursor-pointer focus-within:-translate-y-28 hover:-translate-y-28"
+          : "cursor-not-allowed opacity-50",
       ].join(" ")}
     >
       <div
@@ -60,20 +59,21 @@ export function CombatCard({
         {/* Illustration */}
         <div className="bg-surface-raised border-border h-24 w-full shrink-0 border-b" />
 
-        {/* Cooldown */}
+        {/* Cooldown / lock state */}
         <div className="border-border flex h-7 shrink-0 items-center border-b px-3">
-          <p
-            className={[
-              "font-mono text-xs",
-              onCooldown ? "text-crimson" : "text-muted",
-            ].join(" ")}
-          >
-            {onCooldown
-              ? `cd ${remainingCooldown}`
-              : cardDefinition.cooldown > 0
+          {onCooldown ? (
+            <p className="text-crimson font-mono text-xs">
+              cd {remainingCooldown}
+            </p>
+          ) : lockedByRequirements ? (
+            <p className="text-muted font-mono text-xs">locked</p>
+          ) : (
+            <p className="text-muted font-mono text-xs">
+              {cardDefinition.cooldown > 0
                 ? `cd ${cardDefinition.cooldown}`
                 : "—"}
-          </p>
+            </p>
+          )}
         </div>
 
         {/* Rules */}

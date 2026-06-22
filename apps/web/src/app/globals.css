@@ -14,6 +14,7 @@
   --azure: #2980b9;
   --emerald: #27ae60;
   --violet: #8e44ad;
+  --amber: #e67e22;
 }
 
 @theme inline {
@@ -27,6 +28,7 @@
   --color-azure: var(--azure);
   --color-emerald: var(--emerald);
   --color-violet: var(--violet);
+  --color-amber: var(--amber);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

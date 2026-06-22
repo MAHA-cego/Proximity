@@ -93,12 +93,26 @@ class CorruptedMilitiamanDoctrine implements AiAgent {
     const feintOpportunity =
       enemyState.health <= enemyState.combatant.maxHealth * 0.6;
     if (feintOpportunity) {
+      // If FeintActive is already running and the enemy hasn't taken the bait,
+      // press with Slash instead of wasting the next Feint on an unreceptive target
+      const selfHasFeintActive = actorState.statuses.some(
+        (s) => s.type === StatusType.FeintActive,
+      );
+      if (selfHasFeintActive) {
+        return [SLASH_ID, PARRY_ID, GUARD_ID, FEINT_ID, RECOVER_ID, EXPLOIT_ID];
+      }
       return [FEINT_ID, SLASH_ID, GUARD_ID, PARRY_ID, RECOVER_ID, EXPLOIT_ID];
     }
 
     // Opening turns: establish Guard while observing the opponent
     if (turnNumber <= 2) {
       return [GUARD_ID, FEINT_ID, SLASH_ID, PARRY_ID, RECOVER_ID, EXPLOIT_ID];
+    }
+
+    // Late game: if the fight has dragged on without Exploit conditions materialising,
+    // abandon patience and press damage
+    if (turnNumber > 8) {
+      return [SLASH_ID, FEINT_ID, PARRY_ID, GUARD_ID, RECOVER_ID, EXPLOIT_ID];
     }
 
     // Default: proactive defence first, offence second, Recover last

@@ -37,6 +37,7 @@ export class StatusSystem implements GameSystem {
             sourceId: activeCombatantId,
             targetId: activeCombatantId,
             amount: status.amount,
+            cause: { kind: "status", statusType: StatusType.Bleeding },
           });
           break;
         }
@@ -55,6 +56,7 @@ export class StatusSystem implements GameSystem {
             sourceId: activeCombatantId,
             targetId: activeCombatantId,
             amount: status.amount,
+            cause: { kind: "status", statusType: StatusType.Burn },
           });
           break;
         }
@@ -97,6 +99,7 @@ export class StatusSystem implements GameSystem {
               sourceId: activeCombatantId,
               targetId: activeCombatantId,
               amount: effectiveHeal,
+              cause: { kind: "status", statusType: StatusType.Regeneration },
             });
           }
           break;

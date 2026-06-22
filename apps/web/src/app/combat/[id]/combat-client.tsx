@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   EventType,
@@ -49,7 +49,7 @@ interface CombatClientProps {
 }
 
 function combatantName(combatantId: CombatantId, opponentName: string): string {
-  return combatantId === PLAYER_COMBATANT_ID ? "Player" : opponentName;
+  return combatantId === PLAYER_COMBATANT_ID ? "You" : opponentName;
 }
 
 function cardName(cardDefinitionId: CardDefinitionId): string {
@@ -59,9 +59,17 @@ function cardName(cardDefinitionId: CardDefinitionId): string {
     .join(" ");
 }
 
+// Semantic color palette:
+// crimson  = damage (dealt, DoT statuses)
+// amber    = offensive buffs (attack modifiers, Berserk)
+// azure    = defensive buffs (Shield, Parry)
+// emerald  = healing (healing done, heal modifiers, Regeneration)
+// violet   = manipulation (Feint, Opening)
+// muted    = neutral / inhibition (Exhausted)
+
 const STATUS_LABELS: Record<StatusType, { label: string; className: string }> =
   {
-    [StatusType.Berserk]: { label: "Berserk", className: "text-crimson" },
+    [StatusType.Berserk]: { label: "Berserk", className: "text-amber" },
     [StatusType.Bleeding]: { label: "Bleeding", className: "text-crimson" },
     [StatusType.Burn]: { label: "Burn", className: "text-crimson" },
     [StatusType.Exhausted]: { label: "Exhausted", className: "text-muted" },
@@ -78,19 +86,30 @@ const STATUS_LABELS: Record<StatusType, { label: string; className: string }> =
     [StatusType.Shield]: { label: "Shield", className: "text-azure" },
   };
 
+const STATUS_SHOWS_AMOUNT = new Set<StatusType>([
+  StatusType.Bleeding,
+  StatusType.Burn,
+  StatusType.Parry,
+  StatusType.Regeneration,
+  StatusType.Shield,
+]);
+
 const MODIFIER_LABELS: Record<
   ModifierType,
-  { label: string; className: string }
+  { label: (amount: number) => string; className: string }
 > = {
   [ModifierType.Damage]: {
-    label: "damage bonus",
-    className: "text-crimson",
+    label: (amount) => `+${amount} attack`,
+    className: "text-amber",
   },
   [ModifierType.DamageMultiplier]: {
-    label: "damage multiplier",
-    className: "text-crimson",
+    label: (amount) => `${amount}× damage`,
+    className: "text-amber",
   },
-  [ModifierType.Heal]: { label: "healing bonus", className: "text-emerald" },
+  [ModifierType.Heal]: {
+    label: (amount) => `+${amount} healing`,
+    className: "text-emerald",
+  },
 };
 
 function eventAlignment(event: GameEvent): EntryAlignment {
@@ -126,41 +145,81 @@ function renderEvent(
     case EventType.CardPlayed:
       return (
         <CombatLogEntry key={index} align={align}>
-          {name(event.actorId)} plays {cardName(event.cardDefinitionId)}.
+          {name(event.actorId)} uses {cardName(event.cardDefinitionId)}.
         </CombatLogEntry>
       );
 
-    case EventType.DamageDealt:
+    case EventType.DamageDealt: {
+      const { cause } = event;
+      const causeNode =
+        cause?.kind === "card" ? (
+          <> from {cardName(cause.cardId)}</>
+        ) : cause?.kind === "status" ? (
+          <>
+            {" "}
+            from{" "}
+            <span className={STATUS_LABELS[cause.statusType].className}>
+              {STATUS_LABELS[cause.statusType].label}
+            </span>
+          </>
+        ) : null;
+      const verb = cause?.kind === "status" ? "suffers" : "takes";
       return (
         <CombatLogEntry key={index} align={align}>
-          {name(event.targetId)} takes{" "}
-          <span className="text-crimson">{event.amount}</span> damage.
+          {name(event.targetId)} {verb}{" "}
+          <span className="text-crimson">{event.amount}</span> damage
+          {causeNode}.
         </CombatLogEntry>
       );
+    }
 
-    case EventType.HealingDone:
+    case EventType.HealingDone: {
+      const { cause } = event;
+      const causeNode =
+        cause?.kind === "card" ? (
+          <> from {cardName(cause.cardId)}</>
+        ) : cause?.kind === "status" ? (
+          <>
+            {" "}
+            from{" "}
+            <span className={STATUS_LABELS[cause.statusType].className}>
+              {STATUS_LABELS[cause.statusType].label}
+            </span>
+          </>
+        ) : null;
       return (
         <CombatLogEntry key={index} align={align}>
           {name(event.targetId)} recovers{" "}
-          <span className="text-emerald">{event.amount}</span> HP.
+          <span className="text-emerald">{event.amount}</span> HP{causeNode}.
         </CombatLogEntry>
       );
+    }
 
     case EventType.StatusApplied: {
       const { label, className } = STATUS_LABELS[event.statusType];
+      const showAmount =
+        event.amount > 0 && STATUS_SHOWS_AMOUNT.has(event.statusType);
       return (
         <CombatLogEntry key={index} align={align}>
           {name(event.targetId)} gains{" "}
-          <span className={className}>{label}</span>.
+          <span className={className}>{label}</span>
+          {showAmount && (
+            <>
+              {" "}
+              (<span className={className}>{event.amount}</span>)
+            </>
+          )}
+          .
         </CombatLogEntry>
       );
     }
 
     case EventType.StatusRemoved: {
-      const { label } = STATUS_LABELS[event.statusType];
+      const { label, className } = STATUS_LABELS[event.statusType];
       return (
         <CombatLogEntry key={index} align={align}>
-          {label} on {name(event.targetId)} fades.
+          <span className={className}>{label}</span> on {name(event.targetId)}{" "}
+          fades.
         </CombatLogEntry>
       );
     }
@@ -170,7 +229,7 @@ function renderEvent(
       return (
         <CombatLogEntry key={index} align={align}>
           {name(event.targetId)} gains{" "}
-          <span className={className}>{label}</span>.
+          <span className={className}>{label(event.amount)}</span>.
         </CombatLogEntry>
       );
     }
@@ -186,8 +245,8 @@ function renderEvent(
     case EventType.MatchEnded: {
       const text =
         event.winnerId === PLAYER_COMBATANT_ID
-          ? `Player wins. ${opponentName} has been defeated.`
-          : `${opponentName} wins. Player has been defeated.`;
+          ? `You win. ${opponentName} has been defeated.`
+          : `${opponentName} wins. You have been defeated.`;
       return (
         <CombatLogEntry key={index} align={align}>
           {text}
@@ -204,8 +263,12 @@ function renderEvent(
 
     case EventType.CooldownChanged: {
       const card = cardName(event.cardDefinitionId);
-      // Card became ready after being on cooldown.
-      if (event.previousCooldown > 0 && event.newCooldown === 0) {
+      // Card became ready after being on cooldown — only meaningful for the player's own hand.
+      if (
+        event.previousCooldown > 0 &&
+        event.newCooldown === 0 &&
+        event.targetId === PLAYER_COMBATANT_ID
+      ) {
         return (
           <CombatLogEntry key={index} align={align}>
             {card} ready.
@@ -220,7 +283,7 @@ function renderEvent(
           </CombatLogEntry>
         );
       }
-      // Mid-cooldown tick: already visible on the card; skip.
+      // Mid-cooldown tick and opponent ready events: already visible on cards; skip.
       return null;
     }
 
@@ -233,8 +296,12 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   const encounter = ENCOUNTER_REGISTRY.get(encounterId)!;
 
   const router = useRouter();
-  const { completeEncounter, unlockedCardDefinitions } = useProgression();
+  const { completeEncounter, completedEncounterIds, unlockedCardDefinitions } =
+    useProgression();
   const { activeDeck } = useDeck();
+
+  // Snapshot completion state at mount so replay wins don't re-show the reward screen.
+  const [isReplay] = useState(() => completedEncounterIds.has(encounterId));
 
   const playerLoadout = useMemo<CombatantLoadout>(
     () => ({ cardDefinitionIds: activeDeck }),
@@ -262,6 +329,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
     aiPhaseEvents,
     playCard,
     canPlayCard,
+    endTurn,
     reset,
   } = useCombat(encounterId, definition, agent);
 
@@ -271,6 +339,11 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   const [playbackSide, setPlaybackSide] = useState<
     "player" | "opponent" | null
   >(null);
+
+  // Synchronous guard: set true when a playback sequence is starting (before the
+  // first setTimeout fires) and cleared when playback completes. Prevents the
+  // auto-advance effect from calling endTurn() twice in the same render cycle.
+  const playbackPendingRef = useRef(false);
 
   // Revealed event log
   const [revealedEvents, setRevealedEvents] = useState<readonly GameEvent[]>(
@@ -302,6 +375,10 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
     if (allEvents.length === 0) return;
 
+    // Block auto-advance synchronously: the ref is set before any setTimeout fires,
+    // so the auto-advance effect (running in the same commit) sees it immediately.
+    playbackPendingRef.current = true;
+
     let index = 0;
     let active = true;
     let lifecycleTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -330,7 +407,9 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       if (index < allEvents.length) {
         setTimeout(revealNext, EVENT_DELAY_MS);
       } else {
-        // Playback complete — advance the match lifecycle.
+        // Playback complete — clear the guard before setting player-turn so the
+        // next render's auto-advance effect can evaluate legal actions correctly.
+        playbackPendingRef.current = false;
         setPlaybackSide(null);
         if (snapshot.status === MatchStatus.Completed) {
           setMatchPhase("match-complete");
@@ -347,6 +426,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
     return () => {
       active = false;
+      playbackPendingRef.current = false;
       if (lifecycleTimeout !== null) clearTimeout(lifecycleTimeout);
     };
   }, [playerPhaseEvents, aiPhaseEvents, snapshot.status, opponentState.health]);
@@ -367,6 +447,23 @@ export function CombatClient({ encounterId }: CombatClientProps) {
     encounter.rewardCardIds,
     encounter.cardDefinitions,
   ]);
+
+  // Auto-advance: if it's the player's turn and no card can legally be played,
+  // submit EndTurn on their behalf. The playbackPendingRef guard prevents a
+  // double-advance in the render where playback is starting but matchPhase has
+  // not yet transitioned to "playback".
+  useEffect(() => {
+    if (matchPhase !== "player-turn") return;
+    if (playbackPendingRef.current) return;
+    if (snapshot.status !== MatchStatus.InProgress) return;
+
+    const hasLegalCard = playerState.cards.some((card) =>
+      canPlayCard(card.instanceId),
+    );
+    if (!hasLegalCard) {
+      endTurn();
+    }
+  }, [matchPhase, snapshot, playerState, canPlayCard, endTurn]);
 
   // Portrait feedback: check revealed batch events for damage/healing targeting each combatant.
   const playerFeedback: PortraitFeedback = revealedInBatch.some(
@@ -405,6 +502,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   };
 
   const handleReset = () => {
+    playbackPendingRef.current = false;
     reset();
     setRevealedEvents([]);
     setRevealedInBatch([]);
@@ -467,11 +565,15 @@ export function CombatClient({ encounterId }: CombatClientProps) {
         />
       </main>
 
-      {/* Opponent phase indicator */}
-      {matchPhase === "playback" && playbackSide === "opponent" && (
-        <div className="flex shrink-0 justify-center py-2">
+      {/* Phase strip — always visible while match is in progress */}
+      {!isMatchOver && (
+        <div className="border-border flex shrink-0 justify-center border-t py-2">
           <p className="text-muted font-mono text-xs tracking-[0.3em] uppercase">
-            Opponent acting.
+            {matchPhase === "player-turn"
+              ? "your turn"
+              : playbackSide === "opponent"
+                ? "opponent acting"
+                : "resolving"}
           </p>
         </div>
       )}
@@ -489,6 +591,11 @@ export function CombatClient({ encounterId }: CombatClientProps) {
               isPlayable={
                 matchPhase === "player-turn" && canPlayCard(card.instanceId)
               }
+              lockedByRequirements={
+                matchPhase === "player-turn" &&
+                card.remainingCooldown === 0 &&
+                !canPlayCard(card.instanceId)
+              }
               onPlay={() => handlePlayCard(card.instanceId)}
             />
           ))}
@@ -500,7 +607,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
         <MatchOverlay
           playerWon={matchPhase === "victory"}
           encounterName={encounter.name}
-          rewardCardDefinitions={rewardCardDefinitions}
+          rewardCardDefinitions={isReplay ? [] : rewardCardDefinitions}
           onReplay={handleReset}
           onLeave={() => router.push("/encounters")}
         />
