@@ -24,6 +24,7 @@ import { QuickMenu } from "./quick-menu";
 import { TurnIndicator } from "./turn-indicator";
 import type { CombatControls } from "@/hooks/use-combat";
 import type { MatchParticipant } from "@/lib/simulation/match-factory";
+import { encounterIllustrationSrc } from "@/lib/illustrations";
 
 const EVENT_DELAY_MS = 150;
 const MATCH_COMPLETE_DELAY_MS = 800;
@@ -553,6 +554,9 @@ export function CombatBoard({
 
         <OpponentArea
           name={opponentParticipant.displayName}
+          illustrationSrc={encounterIllustrationSrc(
+            String(opponentParticipant.combatant.id),
+          )}
           state={opponentState}
           feedback={opponentFeedback}
           feedbackKey={String(batchKey)}

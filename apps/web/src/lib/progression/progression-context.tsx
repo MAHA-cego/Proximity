@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -13,7 +14,11 @@ import {
   type CardDefinition,
   type CardDefinitionId,
 } from "@proximity/simulation";
-import { ENCOUNTER_ORDER } from "@/lib/simulation/encounters";
+import {
+  ENCOUNTER_ORDER,
+  ENCOUNTER_REGISTRY,
+} from "@/lib/simulation/encounters";
+import { storage } from "@/lib/session-storage";
 
 const INITIAL_UNLOCKED_CARD_IDS: ReadonlySet<CardDefinitionId> = new Set(
   STARTER_CARD_DEFINITIONS.keys(),
@@ -41,6 +46,38 @@ interface ProgressionContextValue extends ProgressionState {
   ) => void;
 }
 
+interface PersistedProgression {
+  completedEncounterIds: string[];
+  unlockedCardIds: string[];
+}
+
+function buildInitialState(): ProgressionState {
+  const saved = storage.get<PersistedProgression>("progression");
+  if (!saved) {
+    return {
+      completedEncounterIds: new Set(),
+      unlockedCardIds: INITIAL_UNLOCKED_CARD_IDS,
+      unlockedCardDefinitions: INITIAL_UNLOCKED_CARD_DEFINITIONS,
+    };
+  }
+
+  const completedEncounterIds = new Set(saved.completedEncounterIds);
+  const unlockedCardIds = new Set(saved.unlockedCardIds as CardDefinitionId[]);
+
+  // Reconstruct card definitions from starter set + encounter rewards
+  const unlockedCardDefinitions = new Map(STARTER_CARD_DEFINITIONS);
+  for (const encounterId of saved.completedEncounterIds) {
+    const encounter = ENCOUNTER_REGISTRY.get(encounterId);
+    if (!encounter) continue;
+    for (const id of encounter.rewardCardIds) {
+      const def = encounter.cardDefinitions.get(id);
+      if (def) unlockedCardDefinitions.set(id, def);
+    }
+  }
+
+  return { completedEncounterIds, unlockedCardIds, unlockedCardDefinitions };
+}
+
 const ProgressionContext = createContext<ProgressionContextValue | null>(null);
 
 export function ProgressionProvider({
@@ -48,11 +85,24 @@ export function ProgressionProvider({
 }: {
   readonly children: ReactNode;
 }) {
-  const [state, setState] = useState<ProgressionState>({
-    completedEncounterIds: new Set(),
-    unlockedCardIds: INITIAL_UNLOCKED_CARD_IDS,
-    unlockedCardDefinitions: INITIAL_UNLOCKED_CARD_DEFINITIONS,
+  const [state, setState] = useState<ProgressionState>(() => {
+    if (typeof window === "undefined") {
+      return {
+        completedEncounterIds: new Set(),
+        unlockedCardIds: INITIAL_UNLOCKED_CARD_IDS,
+        unlockedCardDefinitions: INITIAL_UNLOCKED_CARD_DEFINITIONS,
+      };
+    }
+    return buildInitialState();
   });
+
+  // Persist progression whenever it changes
+  useEffect(() => {
+    storage.set("progression", {
+      completedEncounterIds: [...state.completedEncounterIds],
+      unlockedCardIds: [...state.unlockedCardIds],
+    });
+  }, [state]);
 
   // An encounter is available if it is first in order, or the one before it is completed.
   const availableEncounterIds = useMemo<ReadonlySet<string>>(

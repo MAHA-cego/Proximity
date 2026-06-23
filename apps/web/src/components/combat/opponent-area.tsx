@@ -7,6 +7,7 @@ import { StatusChip } from "./status-chip";
 
 interface OpponentAreaProps {
   readonly name: string;
+  readonly illustrationSrc?: string;
   readonly state: CombatantState;
   readonly feedback?: PortraitFeedback;
   readonly feedbackKey?: string;
@@ -14,6 +15,7 @@ interface OpponentAreaProps {
 
 export function OpponentArea({
   name,
+  illustrationSrc,
   state,
   feedback,
   feedbackKey,
@@ -23,6 +25,7 @@ export function OpponentArea({
       <Stack gap={4} className="p-5">
         <PortraitCard
           name={name}
+          illustrationSrc={illustrationSrc}
           feedback={feedback}
           feedbackKey={feedbackKey}
         />

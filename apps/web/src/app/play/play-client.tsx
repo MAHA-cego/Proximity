@@ -34,20 +34,18 @@ function EncounterCard({ id, name, status, onSelect }: EncounterCardProps) {
           className="absolute inset-0 h-full w-full object-cover"
         />
       </div>
-      {/* Name bar */}
-      <div className="border-border flex h-8 shrink-0 items-center justify-between border-t px-3">
+      {/* Name bar — grows to fit, centered */}
+      <div className="border-border flex shrink-0 items-center justify-center gap-1.5 border-t px-3 py-2">
         <span
           className={[
-            "truncate font-mono text-xs",
+            "text-center font-mono text-xs leading-tight",
             isLocked ? "text-muted" : "text-foreground",
           ].join(" ")}
         >
           {name}
         </span>
         {status === "completed" && (
-          <span className="text-emerald ml-2 shrink-0 font-mono text-xs">
-            ✓
-          </span>
+          <span className="text-emerald shrink-0 font-mono text-xs">✓</span>
         )}
       </div>
     </>
@@ -55,7 +53,7 @@ function EncounterCard({ id, name, status, onSelect }: EncounterCardProps) {
 
   if (isLocked) {
     return (
-      <div className="border-border bg-surface flex h-56 w-40 flex-col border opacity-50">
+      <div className="border-border bg-surface flex aspect-[5/7] w-52 flex-col border opacity-50">
         {inner}
       </div>
     );
@@ -65,9 +63,26 @@ function EncounterCard({ id, name, status, onSelect }: EncounterCardProps) {
     <button
       type="button"
       onClick={onSelect}
-      className="border-border bg-surface flex h-56 w-40 cursor-pointer flex-col border transition-opacity duration-150 hover:opacity-80"
+      className="border-border bg-surface flex aspect-[5/7] w-52 cursor-pointer flex-col border transition-opacity duration-150 hover:opacity-80"
     >
       {inner}
+    </button>
+  );
+}
+
+interface ModeCardProps {
+  readonly label: string;
+  readonly onSelect: () => void;
+}
+
+function ModeCard({ label, onSelect }: ModeCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="border-border bg-surface flex h-36 flex-1 cursor-pointer flex-col items-center justify-center border transition-opacity duration-150 hover:opacity-80"
+    >
+      <span className="text-foreground font-mono text-sm">{label}</span>
     </button>
   );
 }
@@ -78,7 +93,8 @@ export function PlayClient() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-4 py-8">
-      <div className="flex flex-col items-center gap-12">
+      {/* No items-center here — lets both sections stretch to the adventure row width */}
+      <div className="flex flex-col gap-12">
         {/* Adventure section */}
         <div className="flex flex-col gap-6">
           <p className="text-muted text-xs tracking-[0.3em] uppercase">
@@ -108,28 +124,20 @@ export function PlayClient() {
           </div>
         </div>
 
-        {/* Multiplayer section */}
-        <div className="flex w-80 flex-col gap-6">
+        {/* Multiplayer section — row stretches to match adventure width */}
+        <div className="flex flex-col gap-6">
           <p className="text-muted text-xs tracking-[0.3em] uppercase">
             Multiplayer
           </p>
-          <div className="border-border border-t">
-            <button
-              type="button"
-              onClick={() => router.push("/pvp/setup")}
-              className="border-border hover:bg-surface-raised flex w-full cursor-pointer items-center justify-between border-b px-4 py-4 text-left transition-colors duration-150"
-            >
-              <span className="text-foreground font-mono text-sm">
-                Local Versus
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/multiplayer")}
-              className="border-border hover:bg-surface-raised flex w-full cursor-pointer items-center justify-between border-b px-4 py-4 text-left transition-colors duration-150"
-            >
-              <span className="text-foreground font-mono text-sm">Online</span>
-            </button>
+          <div className="flex gap-3">
+            <ModeCard
+              label="Local Versus"
+              onSelect={() => router.push("/pvp/setup")}
+            />
+            <ModeCard
+              label="Online"
+              onSelect={() => router.push("/multiplayer")}
+            />
           </div>
         </div>
       </div>

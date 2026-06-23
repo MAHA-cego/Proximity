@@ -5,14 +5,8 @@ import {
   type CardDefinition,
   type CardDefinitionId,
 } from "@proximity/simulation";
-import {
-  cardPrimaryColor,
-  CARD_BORDER_CLASS,
-  CARD_HOVER_BORDER_CLASS,
-} from "@/lib/card-color";
-import { cardIllustrationSrc } from "@/lib/illustrations";
 import { Stack } from "@/components/ui";
-import { CardIllustration, CardRules } from "@/components/combat";
+import { CardRules } from "@/components/combat";
 import { DECK_SIZE, useDeck } from "@/lib/progression/deck-context";
 import { useProgression } from "@/lib/progression/progression-context";
 import { ENCOUNTER_REGISTRY } from "@/lib/simulation/encounters";
@@ -32,10 +26,6 @@ function CardFace({ definition }: { readonly definition: CardDefinition }) {
           {formatCardName(definition.id)}
         </p>
       </div>
-      <CardIllustration
-        src={cardIllustrationSrc(String(definition.id))}
-        alt={formatCardName(definition.id)}
-      />
       <div className="border-border flex h-7 shrink-0 items-center border-b px-3">
         <p className="text-muted font-mono text-xs">
           {definition.cooldown > 0 ? `cd ${definition.cooldown}` : "—"}
@@ -55,16 +45,11 @@ function CollectionCard({
   readonly definition: CardDefinition;
   readonly onAdd: () => void;
 }) {
-  const color = cardPrimaryColor(definition);
   return (
     <button
       type="button"
       onClick={onAdd}
-      className={[
-        "bg-surface flex h-56 w-40 cursor-pointer flex-col border text-left transition-colors duration-150",
-        "border-border",
-        CARD_HOVER_BORDER_CLASS[color],
-      ].join(" ")}
+      className="border-border bg-surface hover:border-foreground flex h-56 w-40 cursor-pointer flex-col border text-left transition-colors duration-150"
     >
       <CardFace definition={definition} />
     </button>
@@ -137,16 +122,12 @@ export function DeckClient({ encounterId }: DeckClientProps) {
           <Stack direction="row" wrap gap={3}>
             {activeDeck.map((id) => {
               const def = unlockedCardDefinitions.get(id)!;
-              const borderClass = CARD_BORDER_CLASS[cardPrimaryColor(def)];
               return (
                 <button
                   key={id}
                   type="button"
                   onClick={() => removeCard(id)}
-                  className={[
-                    "bg-surface flex h-56 w-40 cursor-pointer flex-col border text-left transition-opacity duration-150 hover:opacity-60",
-                    borderClass,
-                  ].join(" ")}
+                  className="border-border bg-surface flex h-56 w-40 cursor-pointer flex-col border text-left transition-opacity duration-150 hover:opacity-60"
                 >
                   <CardFace definition={def} />
                 </button>

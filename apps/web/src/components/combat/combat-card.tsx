@@ -1,7 +1,4 @@
 import type { CardDefinition, CardDefinitionId } from "@proximity/simulation";
-import { cardPrimaryColor, CARD_BORDER_CLASS } from "@/lib/card-color";
-import { cardIllustrationSrc } from "@/lib/illustrations";
-import { CardIllustration } from "./card-illustration";
 import { CardRules } from "./card-rules";
 
 function formatCardName(id: CardDefinitionId): string {
@@ -27,7 +24,6 @@ export function CombatCard({
   onPlay,
 }: CombatCardProps) {
   const onCooldown = remainingCooldown > 0;
-  const borderClass = CARD_BORDER_CLASS[cardPrimaryColor(cardDefinition)];
 
   return (
     <button
@@ -41,27 +37,17 @@ export function CombatCard({
         "group h-56 w-40 text-left",
         "transition-transform duration-200",
         isPlayable
-          ? "cursor-pointer focus-within:-translate-y-44 hover:-translate-y-44"
+          ? "cursor-pointer focus-within:-translate-y-28 hover:-translate-y-28"
           : "cursor-not-allowed opacity-50",
       ].join(" ")}
     >
-      <div
-        className={["bg-surface flex h-full flex-col border", borderClass].join(
-          " ",
-        )}
-      >
+      <div className="border-border bg-surface flex h-full flex-col border">
         {/* Card Name */}
         <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
           <p className="text-foreground truncate font-mono text-xs">
             {formatCardName(cardDefinition.id)}
           </p>
         </div>
-
-        {/* Illustration */}
-        <CardIllustration
-          src={cardIllustrationSrc(String(cardDefinition.id))}
-          alt={formatCardName(cardDefinition.id)}
-        />
 
         {/* Cooldown / lock state */}
         <div className="border-border flex h-7 shrink-0 items-center border-b px-3">

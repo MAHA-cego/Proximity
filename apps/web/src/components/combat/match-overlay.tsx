@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { CardDefinition, CardDefinitionId } from "@proximity/simulation";
-import { cardPrimaryColor, CARD_BORDER_CLASS } from "@/lib/card-color";
-import { cardIllustrationSrc } from "@/lib/illustrations";
 import { Stack } from "@/components/ui";
-import { CardIllustration } from "./card-illustration";
 import { CardRules } from "./card-rules";
 
 function formatCardName(id: CardDefinitionId): string {
@@ -16,23 +13,13 @@ function formatCardName(id: CardDefinitionId): string {
 }
 
 function RewardCard({ definition }: { readonly definition: CardDefinition }) {
-  const borderClass = CARD_BORDER_CLASS[cardPrimaryColor(definition)];
   return (
-    <div
-      className={[
-        "bg-surface flex h-56 w-40 flex-col border",
-        borderClass,
-      ].join(" ")}
-    >
+    <div className="border-border bg-surface flex h-56 w-40 flex-col border">
       <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
         <p className="text-foreground truncate font-mono text-xs">
           {formatCardName(definition.id)}
         </p>
       </div>
-      <CardIllustration
-        src={cardIllustrationSrc(String(definition.id))}
-        alt={formatCardName(definition.id)}
-      />
       <div className="border-border flex h-7 shrink-0 items-center border-b px-3">
         <p className="text-muted font-mono text-xs">
           {definition.cooldown > 0 ? `cd ${definition.cooldown}` : "—"}

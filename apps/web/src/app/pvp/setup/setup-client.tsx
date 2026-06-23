@@ -1,19 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { storage } from "@/lib/session-storage";
 import {
   type CardDefinition,
   type CardDefinitionId,
 } from "@proximity/simulation";
-import {
-  cardPrimaryColor,
-  CARD_BORDER_CLASS,
-  CARD_HOVER_BORDER_CLASS,
-} from "@/lib/card-color";
-import { cardIllustrationSrc } from "@/lib/illustrations";
 import { Stack } from "@/components/ui";
-import { CardIllustration, CardRules } from "@/components/combat";
+import { CardRules } from "@/components/combat";
 import { DECK_SIZE } from "@/lib/progression/deck-context";
 import { useProgression } from "@/lib/progression/progression-context";
 
@@ -34,10 +29,6 @@ function CardFace({ definition }: { readonly definition: CardDefinition }) {
           {formatCardName(definition.id)}
         </p>
       </div>
-      <CardIllustration
-        src={cardIllustrationSrc(String(definition.id))}
-        alt={formatCardName(definition.id)}
-      />
       <div className="border-border flex h-7 shrink-0 items-center border-b px-3">
         <p className="text-muted font-mono text-xs">
           {definition.cooldown > 0 ? `cd ${definition.cooldown}` : "—"}
@@ -94,16 +85,12 @@ function DeckPicker({
           <Stack direction="row" wrap gap={3}>
             {deck.map((id) => {
               const def = definitions.get(id)!;
-              const borderClass = CARD_BORDER_CLASS[cardPrimaryColor(def)];
               return (
                 <button
                   key={id}
                   type="button"
                   onClick={() => onRemove(id)}
-                  className={[
-                    "bg-surface flex h-56 w-40 cursor-pointer flex-col border text-left transition-opacity duration-150 hover:opacity-60",
-                    borderClass,
-                  ].join(" ")}
+                  className="border-border bg-surface flex h-56 w-40 cursor-pointer flex-col border text-left transition-opacity duration-150 hover:opacity-60"
                 >
                   <CardFace definition={def} />
                 </button>
@@ -131,17 +118,12 @@ function DeckPicker({
               {unequipped.map((id) => {
                 const def = definitions.get(id);
                 if (!def) return null;
-                const color = cardPrimaryColor(def);
                 return (
                   <button
                     key={id}
                     type="button"
                     onClick={() => onAdd(id)}
-                    className={[
-                      "bg-surface flex h-56 w-40 cursor-pointer flex-col border text-left transition-colors duration-150",
-                      "border-border",
-                      CARD_HOVER_BORDER_CLASS[color],
-                    ].join(" ")}
+                    className="border-border bg-surface hover:border-foreground flex h-56 w-40 cursor-pointer flex-col border text-left transition-colors duration-150"
                   >
                     <CardFace definition={def} />
                   </button>
@@ -187,13 +169,32 @@ function DeckPicker({
   );
 }
 
+interface PvpSetupSession {
+  phase: SetupPhase;
+  p1Deck: string[];
+  p2Deck: string[];
+}
+
 export function SetupClient() {
   const router = useRouter();
   const { unlockedCardIds, unlockedCardDefinitions } = useProgression();
 
-  const [phase, setPhase] = useState<SetupPhase>("p1-deck");
-  const [p1Deck, setP1Deck] = useState<CardDefinitionId[]>([]);
-  const [p2Deck, setP2Deck] = useState<CardDefinitionId[]>([]);
+  const saved =
+    typeof window !== "undefined"
+      ? storage.get<PvpSetupSession>("pvp-setup")
+      : null;
+
+  const [phase, setPhase] = useState<SetupPhase>(saved?.phase ?? "p1-deck");
+  const [p1Deck, setP1Deck] = useState<CardDefinitionId[]>(
+    (saved?.p1Deck as CardDefinitionId[]) ?? [],
+  );
+  const [p2Deck, setP2Deck] = useState<CardDefinitionId[]>(
+    (saved?.p2Deck as CardDefinitionId[]) ?? [],
+  );
+
+  useEffect(() => {
+    storage.set("pvp-setup", { phase, p1Deck, p2Deck });
+  }, [phase, p1Deck, p2Deck]);
 
   const allCardIds = [...unlockedCardIds];
 
@@ -209,6 +210,7 @@ export function SetupClient() {
       set(deck.filter((c) => c !== id));
 
   const handleLaunch = () => {
+    storage.remove("pvp-setup");
     const p1 = p1Deck.join(",");
     const p2 = p2Deck.join(",");
     router.push(`/pvp/combat?p1=${p1}&p2=${p2}`);

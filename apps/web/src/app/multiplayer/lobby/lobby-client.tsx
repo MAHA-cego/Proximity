@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { storage } from "@/lib/session-storage";
 import type { CardDefinitionId } from "@proximity/simulation";
 import { useProgression } from "@/lib/progression/progression-context";
 import { DECK_SIZE } from "@/lib/progression/deck-context";
@@ -36,7 +37,12 @@ export function LobbyClient() {
   );
 
   const { unlockedCardIds, unlockedCardDefinitions } = useProgression();
-  const [deck, setDeck] = useState<CardDefinitionId[]>([]);
+
+  const [deck, setDeck] = useState<CardDefinitionId[]>(() => {
+    if (typeof window === "undefined") return [];
+    const saved = storage.get<string[]>(`lobby-deck:${code}`);
+    return Array.isArray(saved) ? (saved as CardDefinitionId[]) : [];
+  });
   const [submitted, setSubmitted] = useState(false);
   const [lobbyState, setLobbyState] = useState<LobbyStateView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -89,11 +95,20 @@ export function LobbyClient() {
   };
 
   const addCard = (id: CardDefinitionId) => {
-    if (deck.length < DECK_SIZE) setDeck((prev) => [...prev, id]);
+    setDeck((prev) => {
+      if (prev.length >= DECK_SIZE) return prev;
+      const next = [...prev, id];
+      storage.set(`lobby-deck:${code}`, next);
+      return next;
+    });
   };
 
   const removeCard = (id: CardDefinitionId) => {
-    setDeck((prev) => prev.filter((c) => c !== id));
+    setDeck((prev) => {
+      const next = prev.filter((c) => c !== id);
+      storage.set(`lobby-deck:${code}`, next);
+      return next;
+    });
   };
 
   const deckSet = new Set(deck);

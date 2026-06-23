@@ -4,12 +4,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import { STARTER_LOADOUT, type CardDefinitionId } from "@proximity/simulation";
 import { useProgression } from "./progression-context";
+import { storage } from "@/lib/session-storage";
 
 export const DECK_SIZE = 6;
 
@@ -26,8 +28,21 @@ export function DeckProvider({ children }: { readonly children: ReactNode }) {
   const { unlockedCardIds } = useProgression();
 
   const [activeDeck, setActiveDeck] = useState<readonly CardDefinitionId[]>(
-    STARTER_LOADOUT.cardDefinitionIds,
+    () => {
+      if (typeof window === "undefined")
+        return STARTER_LOADOUT.cardDefinitionIds;
+      const saved = storage.get<string[]>("deck");
+      if (Array.isArray(saved) && saved.length > 0) {
+        return saved as CardDefinitionId[];
+      }
+      return STARTER_LOADOUT.cardDefinitionIds;
+    },
   );
+
+  // Persist deck on change
+  useEffect(() => {
+    storage.set("deck", activeDeck);
+  }, [activeDeck]);
 
   const isDeckValid = useMemo(
     () =>

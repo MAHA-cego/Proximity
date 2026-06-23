@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionType,
   MatchStatus,
@@ -12,6 +12,7 @@ import {
   type MatchId,
 } from "@proximity/simulation";
 import type { MatchParticipant } from "@/lib/simulation/match-factory";
+import { storage } from "@/lib/session-storage";
 
 interface CombatState {
   readonly snapshot: GameState;
@@ -76,17 +77,29 @@ export function useCombat(
   encounterId: string,
   definition: MatchDefinition,
   participants: readonly [MatchParticipant, MatchParticipant],
+  initialState?: GameState,
 ): CombatControls {
   const engine = useMemo(() => createEngine(), []);
 
   const [state, setState] = useState<CombatState>(() => ({
-    snapshot: engine.initializeGame(
-      `${encounterId}-${Date.now()}` as MatchId,
-      definition,
-    ),
+    snapshot:
+      initialState ??
+      engine.initializeGame(
+        `${encounterId}-${Date.now()}` as MatchId,
+        definition,
+      ),
     localPhaseEvents: [],
     automatedPhaseEvents: [],
   }));
+
+  // Persist snapshot so the session can be restored on refresh
+  useEffect(() => {
+    if (state.snapshot.status === MatchStatus.Completed) {
+      storage.remove(`combat:${encounterId}`);
+    } else {
+      storage.set(`combat:${encounterId}`, state.snapshot);
+    }
+  }, [state.snapshot, encounterId]);
 
   const playCard = useCallback(
     (cardInstanceId: CardInstanceId) => {

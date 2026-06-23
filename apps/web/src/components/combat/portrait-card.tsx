@@ -1,22 +1,25 @@
+"use client";
+
 import { Divider, Panel } from "@/components/ui";
 
 export type PortraitFeedback = "damage" | "healing" | "defeated" | null;
 
 interface PortraitCardProps {
   readonly name: string;
+  readonly illustrationSrc?: string;
   readonly feedback?: PortraitFeedback;
   readonly feedbackKey?: string;
 }
 
 export function PortraitCard({
   name,
+  illustrationSrc,
   feedback,
   feedbackKey,
 }: PortraitCardProps) {
   return (
     <Panel>
       <div className="relative">
-        {/* Placeholder artwork — replaced with illustration in production */}
         <div
           className={[
             "bg-surface-raised aspect-[3/4] w-full",
@@ -25,6 +28,22 @@ export function PortraitCard({
               : "",
           ].join(" ")}
         />
+
+        {illustrationSrc && (
+          <img
+            src={illustrationSrc}
+            alt={name}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+            className={[
+              "absolute inset-0 h-full w-full object-cover object-top",
+              feedback === "defeated"
+                ? "grayscale transition-[filter] duration-1000"
+                : "",
+            ].join(" ")}
+          />
+        )}
 
         {feedback === "damage" && (
           <div

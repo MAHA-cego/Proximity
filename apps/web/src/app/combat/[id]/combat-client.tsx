@@ -3,7 +3,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  MatchStatus,
   type CardDefinition,
+  type GameState,
   type MatchDefinition,
 } from "@proximity/simulation";
 import { CombatBoard } from "@/components/combat/combat-board";
@@ -17,6 +19,7 @@ import {
   createMatchDefinition,
   type MatchParticipant,
 } from "@/lib/simulation/match-factory";
+import { storage } from "@/lib/session-storage";
 
 interface PveSessionProps {
   readonly encounterId: string;
@@ -25,6 +28,7 @@ interface PveSessionProps {
   readonly definition: MatchDefinition;
   readonly participants: readonly [MatchParticipant, MatchParticipant];
   readonly rewardCardDefinitions: readonly CardDefinition[];
+  readonly initialCombatState?: GameState;
   readonly onVictory: () => void;
   readonly onReplay: () => void;
   readonly onLeave: () => void;
@@ -37,11 +41,17 @@ function PveSession({
   definition,
   participants,
   rewardCardDefinitions,
+  initialCombatState,
   onVictory,
   onReplay,
   onLeave,
 }: PveSessionProps) {
-  const controls = useCombat(encounterId, definition, participants);
+  const controls = useCombat(
+    encounterId,
+    definition,
+    participants,
+    initialCombatState,
+  );
 
   return (
     <CombatBoard
@@ -71,6 +81,14 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   // Snapshot completion state at mount so replay wins don't re-show the reward screen.
   const [isReplay] = useState(() => completedEncounterIds.has(encounterId));
   const [matchKey, setMatchKey] = useState(0);
+
+  // Restore saved combat state if available and still in progress
+  const [savedCombatState] = useState<GameState | undefined>(() => {
+    if (typeof window === "undefined") return undefined;
+    const saved = storage.get<GameState>(`combat:${encounterId}`);
+    if (!saved || saved.status !== MatchStatus.InProgress) return undefined;
+    return saved;
+  });
 
   const localParticipant = useMemo(
     () => createLocalPlayerParticipant({ cardDefinitionIds: activeDeck }),
@@ -131,6 +149,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       definition={definition}
       participants={participants}
       rewardCardDefinitions={isReplay ? [] : rewardCardDefinitions}
+      initialCombatState={matchKey === 0 ? savedCombatState : undefined}
       onVictory={handleVictory}
       onReplay={() => setMatchKey((k) => k + 1)}
       onLeave={() => router.push("/play")}
