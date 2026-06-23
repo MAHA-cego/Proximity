@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
-import { handleHttpRequest } from "./http-handler.js";
-import { handleWsConnection } from "./ws-handler.js";
+import { handleHttpRequest } from "./http-handler";
+import { handleWsConnection } from "./ws-handler";
 
 const PORT = Number(process.env["PORT"] ?? "3001");
 
