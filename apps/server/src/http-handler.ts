@@ -18,7 +18,8 @@ function readBody(req: IncomingMessage): Promise<string> {
 }
 
 function setCors(res: ServerResponse): void {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = process.env["ALLOWED_ORIGIN"] ?? "*";
+  res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
@@ -42,6 +43,12 @@ export async function handleHttpRequest(
   if (method === "OPTIONS") {
     res.writeHead(204);
     res.end();
+    return;
+  }
+
+  // GET /health
+  if (method === "GET" && pathname === "/health") {
+    json(res, 200, { ok: true });
     return;
   }
 

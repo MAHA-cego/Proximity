@@ -30,7 +30,9 @@ export function LobbyClient() {
   const code = searchParams.get("code") ?? "";
   const playerId = searchParams.get("playerId") ?? "";
   const serverUrl = decodeURIComponent(
-    searchParams.get("server") ?? "http://localhost:3001",
+    searchParams.get("server") ??
+      process.env["NEXT_PUBLIC_SERVER_URL"] ??
+      "http://localhost:3001",
   );
   const wsUrl = serverUrl.replace(/^https?/, (p) =>
     p === "https" ? "wss" : "ws",

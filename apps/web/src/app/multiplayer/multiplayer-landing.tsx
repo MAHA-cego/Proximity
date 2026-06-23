@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const DEFAULT_SERVER = "http://localhost:3001";
+const DEFAULT_SERVER =
+  process.env["NEXT_PUBLIC_SERVER_URL"] ?? "http://localhost:3001";
 
 export function MultiplayerLanding() {
   const router = useRouter();

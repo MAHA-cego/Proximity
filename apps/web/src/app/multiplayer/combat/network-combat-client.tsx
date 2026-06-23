@@ -33,7 +33,10 @@ export function NetworkCombatClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const serverUrl = searchParams.get("server") ?? "ws://localhost:3001";
+  const defaultServer = (
+    process.env["NEXT_PUBLIC_SERVER_URL"] ?? "http://localhost:3001"
+  ).replace(/^https?/, (p) => (p === "https" ? "wss" : "ws"));
+  const serverUrl = searchParams.get("server") ?? defaultServer;
   const matchId = searchParams.get("matchId") ?? "";
   const playerId = searchParams.get("playerId") ?? "";
 
