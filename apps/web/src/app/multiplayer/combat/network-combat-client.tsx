@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CombatBoard } from "@/components/combat/combat-board";
 import { useNetworkCombat } from "@/hooks/use-network-combat";
@@ -40,6 +40,14 @@ export function NetworkCombatClient() {
   const network = useNetworkCombat(serverUrl, matchId, playerId);
 
   const onLeave = () => router.push("/encounters");
+
+  useEffect(() => {
+    if (!network?.rematchCode) return;
+    const httpServerUrl = serverUrl.replace(/^ws(s?):\/\//, "http$1://");
+    router.push(
+      `/multiplayer/lobby?code=${encodeURIComponent(network.rematchCode)}&playerId=${encodeURIComponent(playerId)}&server=${encodeURIComponent(httpServerUrl)}`,
+    );
+  }, [network?.rematchCode, serverUrl, playerId, router]);
 
   const localParticipant = useMemo<MatchParticipant | null>(() => {
     if (!network) return null;
@@ -132,6 +140,8 @@ export function NetworkCombatClient() {
           rewardCardDefinitions={[]}
           controls={network}
           handOffEnabled={false}
+          onReplay={network.requestRematch}
+          replayLabel="Rematch"
           onLeave={onLeave}
         />
       </div>

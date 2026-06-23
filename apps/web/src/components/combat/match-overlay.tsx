@@ -39,7 +39,8 @@ interface MatchOverlayProps {
   readonly playerWon: boolean;
   readonly encounterName: string;
   readonly rewardCardDefinitions: readonly CardDefinition[];
-  readonly onReplay: () => void;
+  readonly onReplay?: () => void;
+  readonly replayLabel?: string;
   readonly onLeave: () => void;
 }
 
@@ -48,6 +49,7 @@ export function MatchOverlay({
   encounterName,
   rewardCardDefinitions,
   onReplay,
+  replayLabel,
   onLeave,
 }: MatchOverlayProps) {
   const [visible, setVisible] = useState(false);
@@ -116,13 +118,15 @@ export function MatchOverlay({
             >
               Encounters
             </button>
-            <button
-              type="button"
-              onClick={onReplay}
-              className="border-border text-muted hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
-            >
-              Replay
-            </button>
+            {onReplay && (
+              <button
+                type="button"
+                onClick={onReplay}
+                className="border-border text-muted hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
+              >
+                {replayLabel ?? "Replay"}
+              </button>
+            )}
           </Stack>
         )}
       </Stack>

@@ -26,7 +26,6 @@ export interface CombatControls {
   readonly playCard: (cardInstanceId: CardInstanceId) => void;
   readonly canPlayCard: (cardInstanceId: CardInstanceId) => boolean;
   readonly endTurn: () => void;
-  readonly reset: () => void;
 }
 
 function getProvider(
@@ -199,17 +198,6 @@ export function useCombat(
     [engine, state.snapshot, definition],
   );
 
-  const reset = useCallback(() => {
-    setState({
-      snapshot: engine.initializeGame(
-        `${encounterId}-${Date.now()}` as MatchId,
-        definition,
-      ),
-      localPhaseEvents: [],
-      automatedPhaseEvents: [],
-    });
-  }, [engine, encounterId, definition]);
-
   return {
     snapshot: state.snapshot,
     localPhaseEvents: state.localPhaseEvents,
@@ -217,6 +205,5 @@ export function useCombat(
     playCard,
     canPlayCard,
     endTurn,
-    reset,
   };
 }

@@ -104,34 +104,37 @@ function startMatch(lobby: LobbyEntry): void {
     .filter((id) => CARD_REGISTRY.has(id))
     .map((id) => [id, CARD_REGISTRY.get(id)!] as const);
 
-  createMatch({
-    matchId,
-    playerAssignments: [
-      { playerId: host.playerId, combatantId: host.combatantId },
-      { playerId: guest.playerId, combatantId: guest.combatantId },
-    ],
-    definition: {
-      combatants: [
-        {
-          combatant: {
-            id: host.combatantId,
-            team: Team.One,
-            maxHealth: 100,
-          },
-          loadout: { cardDefinitionIds: host.deckCardIds },
-        },
-        {
-          combatant: {
-            id: guest.combatantId,
-            team: Team.Two,
-            maxHealth: 100,
-          },
-          loadout: { cardDefinitionIds: guest.deckCardIds },
-        },
+  createMatch(
+    {
+      matchId,
+      playerAssignments: [
+        { playerId: host.playerId, combatantId: host.combatantId },
+        { playerId: guest.playerId, combatantId: guest.combatantId },
       ],
-      cardDefinitions,
+      definition: {
+        combatants: [
+          {
+            combatant: {
+              id: host.combatantId,
+              team: Team.One,
+              maxHealth: 100,
+            },
+            loadout: { cardDefinitionIds: host.deckCardIds },
+          },
+          {
+            combatant: {
+              id: guest.combatantId,
+              team: Team.Two,
+              maxHealth: 100,
+            },
+            loadout: { cardDefinitionIds: guest.deckCardIds },
+          },
+        ],
+        cardDefinitions,
+      },
     },
-  });
+    lobby.code,
+  );
 
   lobby.matchId = matchId;
   lobby.phase = "started";
@@ -144,6 +147,18 @@ export interface LobbyStateView {
   playerReady: boolean;
   opponentReady: boolean;
   matchId: string | null;
+}
+
+export function resetForRematch(code: string): boolean {
+  const lobby = store.get(code);
+  if (!lobby || lobby.phase !== "started") return false;
+  lobby.host = { ...lobby.host, deckCardIds: null };
+  if (lobby.guest) {
+    lobby.guest = { ...lobby.guest, deckCardIds: null };
+  }
+  lobby.phase = "both-joined";
+  lobby.matchId = null;
+  return true;
 }
 
 export function getLobbyState(

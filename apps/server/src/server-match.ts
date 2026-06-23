@@ -30,9 +30,11 @@ export class ServerMatch {
     ReturnType<typeof setTimeout>
   >();
   private isAbandoned = false;
+  private isRematched = false;
 
   constructor(
     readonly matchId: string,
+    private readonly lobbyCode: string | null,
     private readonly definition: MatchDefinition,
     private readonly serializedDefinition: SerializedMatchDefinition,
     private readonly playerMap: ReadonlyMap<string, CombatantId>,
@@ -48,6 +50,10 @@ export class ServerMatch {
     }
     if (this.isAbandoned) {
       ws.close(1008, "Match has been abandoned");
+      return;
+    }
+    if (this.isRematched) {
+      ws.close(1008, "Match has been rematched");
       return;
     }
 
@@ -77,6 +83,7 @@ export class ServerMatch {
 
   removeConnection(playerId: string): void {
     this.connections.delete(playerId);
+    if (this.isRematched) return;
     this.connectionStatus.set(playerId, "disconnected");
     this.notifyOpponent(playerId, { type: "opponent-disconnected" });
 
@@ -95,10 +102,33 @@ export class ServerMatch {
       return;
     }
 
-    const allEvents = this.executeClientMessage(playerId, msg, combatantId);
+    let allEvents: ReturnType<typeof this.executeClientMessage>;
+    try {
+      allEvents = this.executeClientMessage(playerId, msg, combatantId);
+    } catch {
+      this.sendErrorToPlayer(
+        playerId,
+        "ACTION_REJECTED",
+        "Action rejected by engine",
+      );
+      return;
+    }
+
     if (allEvents !== null) {
       this.broadcast({ type: "events", events: allEvents, state: this.state });
     }
+  }
+
+  requestRematch(): string | null {
+    if (this.isAbandoned || this.isRematched || !this.lobbyCode) return null;
+    this.isRematched = true;
+    for (const timer of this.abandonTimers.values()) clearTimeout(timer);
+    this.abandonTimers.clear();
+    return this.lobbyCode;
+  }
+
+  broadcastRematchAvailable(code: string): void {
+    this.broadcast({ type: "rematch-available", code });
   }
 
   private executeClientMessage(
@@ -180,6 +210,9 @@ export class ServerMatch {
         this.state = result.state;
         return [...result.events];
       }
+
+      case "request-rematch":
+        return null;
     }
   }
 

@@ -7,7 +7,10 @@ import { ServerMatch } from "./server-match.js";
 
 const store = new Map<string, ServerMatch>();
 
-export function createMatch(req: CreateMatchRequest): ServerMatch {
+export function createMatch(
+  req: CreateMatchRequest,
+  lobbyCode?: string,
+): ServerMatch {
   const serializedDefinition: SerializedMatchDefinition = req.definition;
 
   const definition: MatchDefinition = {
@@ -24,6 +27,7 @@ export function createMatch(req: CreateMatchRequest): ServerMatch {
 
   const match = new ServerMatch(
     req.matchId,
+    lobbyCode ?? null,
     definition,
     serializedDefinition,
     playerMap,
@@ -34,4 +38,8 @@ export function createMatch(req: CreateMatchRequest): ServerMatch {
 
 export function getMatch(matchId: string): ServerMatch | undefined {
   return store.get(matchId);
+}
+
+export function removeMatch(matchId: string): void {
+  store.delete(matchId);
 }

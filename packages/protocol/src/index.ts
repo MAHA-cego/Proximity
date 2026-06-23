@@ -11,7 +11,8 @@ import type {
 export type ClientMessage =
   | { readonly type: "use-card"; readonly cardInstanceId: CardInstanceId }
   | { readonly type: "end-turn" }
-  | { readonly type: "concede" };
+  | { readonly type: "concede" }
+  | { readonly type: "request-rematch" };
 
 export type ServerMessage =
   | {
@@ -28,7 +29,8 @@ export type ServerMessage =
   | { readonly type: "error"; readonly code: string; readonly message: string }
   | { readonly type: "opponent-disconnected" }
   | { readonly type: "opponent-reconnected" }
-  | { readonly type: "match-abandoned" };
+  | { readonly type: "match-abandoned" }
+  | { readonly type: "rematch-available"; readonly code: string };
 
 export interface SerializedMatchDefinition {
   readonly combatants: readonly MatchCombatant[];

@@ -2,7 +2,10 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { type CardDefinition } from "@proximity/simulation";
+import {
+  type CardDefinition,
+  type MatchDefinition,
+} from "@proximity/simulation";
 import { CombatBoard } from "@/components/combat/combat-board";
 import { useCombat } from "@/hooks/use-combat";
 import { useDeck } from "@/lib/progression/deck-context";
@@ -12,7 +15,47 @@ import {
   createEncounterParticipant,
   createLocalPlayerParticipant,
   createMatchDefinition,
+  type MatchParticipant,
 } from "@/lib/simulation/match-factory";
+
+interface PveSessionProps {
+  readonly encounterId: string;
+  readonly localParticipant: MatchParticipant;
+  readonly opponentParticipant: MatchParticipant;
+  readonly definition: MatchDefinition;
+  readonly participants: readonly [MatchParticipant, MatchParticipant];
+  readonly rewardCardDefinitions: readonly CardDefinition[];
+  readonly onVictory: () => void;
+  readonly onReplay: () => void;
+  readonly onLeave: () => void;
+}
+
+function PveSession({
+  encounterId,
+  localParticipant,
+  opponentParticipant,
+  definition,
+  participants,
+  rewardCardDefinitions,
+  onVictory,
+  onReplay,
+  onLeave,
+}: PveSessionProps) {
+  const controls = useCombat(encounterId, definition, participants);
+
+  return (
+    <CombatBoard
+      localParticipant={localParticipant}
+      opponentParticipant={opponentParticipant}
+      definition={definition}
+      rewardCardDefinitions={rewardCardDefinitions}
+      controls={controls}
+      onVictory={onVictory}
+      onReplay={onReplay}
+      onLeave={onLeave}
+    />
+  );
+}
 
 interface CombatClientProps {
   readonly encounterId: string;
@@ -27,6 +70,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
   // Snapshot completion state at mount so replay wins don't re-show the reward screen.
   const [isReplay] = useState(() => completedEncounterIds.has(encounterId));
+  const [matchKey, setMatchKey] = useState(0);
 
   const localParticipant = useMemo(
     () => createLocalPlayerParticipant({ cardDefinitionIds: activeDeck }),
@@ -57,8 +101,6 @@ export function CombatClient({ encounterId }: CombatClientProps) {
     [localParticipant, opponentParticipant],
   );
 
-  const controls = useCombat(encounterId, definition, participants);
-
   const rewardCardDefinitions = useMemo<readonly CardDefinition[]>(
     () =>
       encounter.rewardCardIds
@@ -81,13 +123,16 @@ export function CombatClient({ encounterId }: CombatClientProps) {
   ]);
 
   return (
-    <CombatBoard
+    <PveSession
+      key={matchKey}
+      encounterId={encounterId}
       localParticipant={localParticipant}
       opponentParticipant={opponentParticipant}
       definition={definition}
+      participants={participants}
       rewardCardDefinitions={isReplay ? [] : rewardCardDefinitions}
-      controls={controls}
       onVictory={handleVictory}
+      onReplay={() => setMatchKey((k) => k + 1)}
       onLeave={() => router.push("/encounters")}
     />
   );

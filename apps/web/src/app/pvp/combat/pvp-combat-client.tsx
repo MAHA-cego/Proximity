@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type CardDefinitionId } from "@proximity/simulation";
+import {
+  type CardDefinitionId,
+  type MatchDefinition,
+} from "@proximity/simulation";
 import { CombatBoard } from "@/components/combat/combat-board";
 import { useCombat } from "@/hooks/use-combat";
 import { useProgression } from "@/lib/progression/progression-context";
@@ -10,12 +13,47 @@ import {
   createLocalPlayerParticipant,
   createLocalPlayer2Participant,
   createMatchDefinition,
+  type MatchParticipant,
 } from "@/lib/simulation/match-factory";
+
+interface PvpSessionProps {
+  readonly localParticipant: MatchParticipant;
+  readonly opponentParticipant: MatchParticipant;
+  readonly definition: MatchDefinition;
+  readonly participants: readonly [MatchParticipant, MatchParticipant];
+  readonly onReplay: () => void;
+  readonly onLeave: () => void;
+}
+
+function PvpSession({
+  localParticipant,
+  opponentParticipant,
+  definition,
+  participants,
+  onReplay,
+  onLeave,
+}: PvpSessionProps) {
+  const controls = useCombat("pvp", definition, participants);
+
+  return (
+    <CombatBoard
+      localParticipant={localParticipant}
+      opponentParticipant={opponentParticipant}
+      definition={definition}
+      rewardCardDefinitions={[]}
+      controls={controls}
+      onReplay={onReplay}
+      onLeave={onLeave}
+    />
+  );
+}
 
 export function PvpCombatClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { unlockedCardDefinitions } = useProgression();
+
+  const [matchKey, setMatchKey] = useState(0);
 
   const p1DeckIds = useMemo<CardDefinitionId[]>(
     () =>
@@ -65,15 +103,14 @@ export function PvpCombatClient() {
     [p1Participant, p2Participant],
   );
 
-  const controls = useCombat("pvp", definition, participants);
-
   return (
-    <CombatBoard
+    <PvpSession
+      key={matchKey}
       localParticipant={p1Participant}
       opponentParticipant={p2Participant}
       definition={definition}
-      rewardCardDefinitions={[]}
-      controls={controls}
+      participants={participants}
+      onReplay={() => setMatchKey((k) => k + 1)}
       onLeave={() => router.push("/encounters")}
     />
   );

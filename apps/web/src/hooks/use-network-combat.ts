@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   type CardInstanceId,
   type CombatantId,
@@ -26,6 +32,8 @@ export interface NetworkCombatControls extends CombatControls {
   readonly opponentConnectionPhase: OpponentConnectionPhase;
   readonly yourCombatantId: CombatantId;
   readonly matchDefinition: MatchDefinition;
+  readonly rematchCode: string | null;
+  readonly requestRematch: () => void;
 }
 
 interface NetworkCombatState {
@@ -36,6 +44,7 @@ interface NetworkCombatState {
   readonly automatedPhaseEvents: readonly GameEvent[];
   readonly connectionPhase: ConnectionPhase;
   readonly opponentConnectionPhase: OpponentConnectionPhase;
+  readonly rematchCode: string | null;
 }
 
 const RECONNECT_DELAY_MS = 2_000;
@@ -54,6 +63,7 @@ export function useNetworkCombat(
     automatedPhaseEvents: [],
     connectionPhase: "connecting",
     opponentConnectionPhase: "connected",
+    rematchCode: null,
   });
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -62,13 +72,23 @@ export function useNetworkCombat(
     undefined,
   );
   const reconnectAttemptsRef = useRef(0);
+  const effectTokenRef = useRef<symbol | null>(null);
+
+  // Always-current ref so stable callbacks can read latest state.
+  const stateRef = useRef(state);
+  useLayoutEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
-    let cleanedUp = false;
+    const token = Symbol();
+    effectTokenRef.current = token;
     reconnectAttemptsRef.current = 0;
 
+    const isActive = () => effectTokenRef.current === token;
+
     function connect(): void {
-      if (cleanedUp) return;
+      if (!isActive()) return;
 
       const url = new URL(serverUrl);
       url.searchParams.set("matchId", matchId);
@@ -78,7 +98,7 @@ export function useNetworkCombat(
       wsRef.current = ws;
 
       ws.onmessage = (event: MessageEvent<string>) => {
-        if (cleanedUp) return;
+        if (!isActive()) return;
         try {
           const msg = JSON.parse(event.data) as ServerMessage;
 
@@ -95,6 +115,7 @@ export function useNetworkCombat(
               automatedPhaseEvents: [],
               connectionPhase: "connected",
               opponentConnectionPhase: "connected",
+              rematchCode: null,
             });
           } else if (msg.type === "events") {
             const isLocal = pendingLocalActionRef.current;
@@ -117,6 +138,8 @@ export function useNetworkCombat(
             }));
           } else if (msg.type === "match-abandoned") {
             setState((prev) => ({ ...prev, connectionPhase: "abandoned" }));
+          } else if (msg.type === "rematch-available") {
+            setState((prev) => ({ ...prev, rematchCode: msg.code }));
           } else if (msg.type === "error") {
             console.error("[network-combat]", msg.code, msg.message);
           }
@@ -126,13 +149,13 @@ export function useNetworkCombat(
       };
 
       ws.onerror = () => {
-        if (!cleanedUp) {
+        if (isActive()) {
           setState((prev) => ({ ...prev, connectionPhase: "error" }));
         }
       };
 
       ws.onclose = (event) => {
-        if (cleanedUp) return;
+        if (!isActive()) return;
 
         // Codes that indicate the server intentionally rejected the connection.
         const isTerminal = event.code === 1000 || event.code === 1008;
@@ -154,7 +177,7 @@ export function useNetworkCombat(
     connect();
 
     return () => {
-      cleanedUp = true;
+      effectTokenRef.current = null;
       clearTimeout(reconnectTimerRef.current);
       wsRef.current?.close(1000, "Component unmounted");
       wsRef.current = null;
@@ -168,6 +191,10 @@ export function useNetworkCombat(
     }
   }, []);
 
+  const requestRematch = useCallback(() => {
+    send({ type: "request-rematch" });
+  }, [send]);
+
   const playCard = useCallback(
     (cardInstanceId: CardInstanceId) => {
       pendingLocalActionRef.current = true;
@@ -177,6 +204,9 @@ export function useNetworkCombat(
   );
 
   const endTurn = useCallback(() => {
+    const { snapshot, yourCombatantId } = stateRef.current;
+    if (!snapshot || snapshot.turn.activeCombatantId !== yourCombatantId)
+      return;
     pendingLocalActionRef.current = true;
     send({ type: "end-turn" });
   }, [send]);
@@ -195,16 +225,13 @@ export function useNetworkCombat(
     [state],
   );
 
-  const reset = useCallback(() => {
-    // Network matches are server-owned; reset is a no-op on the client.
-  }, []);
-
   const {
     snapshot,
     yourCombatantId,
     matchDefinition,
     connectionPhase,
     opponentConnectionPhase,
+    rematchCode,
   } = state;
 
   if (!snapshot || !yourCombatantId || !matchDefinition) return null;
@@ -216,10 +243,11 @@ export function useNetworkCombat(
     playCard,
     canPlayCard,
     endTurn,
-    reset,
     connectionPhase,
     opponentConnectionPhase,
     yourCombatantId,
     matchDefinition,
+    rematchCode,
+    requestRematch,
   };
 }

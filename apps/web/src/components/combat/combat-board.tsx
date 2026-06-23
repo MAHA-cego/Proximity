@@ -293,6 +293,8 @@ export interface CombatBoardProps {
   readonly controls: CombatControls;
   readonly handOffEnabled?: boolean;
   readonly onVictory?: () => void;
+  readonly onReplay?: () => void;
+  readonly replayLabel?: string;
   readonly onLeave: () => void;
 }
 
@@ -304,6 +306,8 @@ export function CombatBoard({
   controls,
   handOffEnabled = true,
   onVictory,
+  onReplay,
+  replayLabel,
   onLeave,
 }: CombatBoardProps) {
   const localId = localParticipant.combatant.id;
@@ -319,7 +323,6 @@ export function CombatBoard({
     playCard,
     canPlayCard,
     endTurn,
-    reset,
   } = controls;
 
   const [matchPhase, setMatchPhase] = useState<MatchPhase>("player-turn");
@@ -493,13 +496,13 @@ export function CombatBoard({
 
   const handleReset = () => {
     playbackPendingRef.current = false;
-    reset();
     setRevealedEvents([]);
     setRevealedInBatch([]);
     setMatchPhase("player-turn");
     setPlaybackSide(null);
     setBatchKey(0);
     setPerspectiveId(localId);
+    onReplay?.();
   };
 
   return (
@@ -618,7 +621,8 @@ export function CombatBoard({
           playerWon={matchPhase === "victory"}
           encounterName={opponentParticipant.displayName}
           rewardCardDefinitions={rewardCardDefinitions}
-          onReplay={handleReset}
+          onReplay={onReplay ? handleReset : undefined}
+          replayLabel={replayLabel}
           onLeave={onLeave}
         />
       )}
