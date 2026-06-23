@@ -105,13 +105,22 @@ export function LobbyClient() {
   return (
     <div className="bg-background text-foreground flex min-h-screen flex-col">
       <header className="border-border flex shrink-0 items-center justify-between border-b px-6 py-4">
-        <div className="flex flex-col gap-1">
-          <p className="text-muted font-mono text-xs tracking-[0.3em] uppercase">
-            Lobby code
-          </p>
-          <p className="text-foreground font-mono text-2xl tracking-[0.4em]">
-            {code}
-          </p>
+        <div className="flex items-center gap-6">
+          <button
+            type="button"
+            onClick={() => router.push("/play")}
+            className="border-border text-muted hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
+          >
+            Leave
+          </button>
+          <div className="flex flex-col gap-1">
+            <p className="text-muted font-mono text-xs tracking-[0.3em] uppercase">
+              Lobby code
+            </p>
+            <p className="text-foreground font-mono text-2xl tracking-[0.4em]">
+              {code}
+            </p>
+          </div>
         </div>
 
         <div className="text-right">

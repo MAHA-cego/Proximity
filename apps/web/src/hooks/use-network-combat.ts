@@ -47,9 +47,6 @@ interface NetworkCombatState {
   readonly rematchCode: string | null;
 }
 
-const RECONNECT_DELAY_MS = 2_000;
-const MAX_RECONNECT_ATTEMPTS = 5;
-
 export function useNetworkCombat(
   serverUrl: string,
   matchId: string,
@@ -68,10 +65,6 @@ export function useNetworkCombat(
 
   const wsRef = useRef<WebSocket | null>(null);
   const pendingLocalActionRef = useRef(false);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
-  );
-  const reconnectAttemptsRef = useRef(0);
   const effectTokenRef = useRef<symbol | null>(null);
 
   // Always-current ref so stable callbacks can read latest state.
@@ -83,7 +76,6 @@ export function useNetworkCombat(
   useEffect(() => {
     const token = Symbol();
     effectTokenRef.current = token;
-    reconnectAttemptsRef.current = 0;
 
     const isActive = () => effectTokenRef.current === token;
 
@@ -103,7 +95,6 @@ export function useNetworkCombat(
           const msg = JSON.parse(event.data) as ServerMessage;
 
           if (msg.type === "match-state") {
-            reconnectAttemptsRef.current = 0;
             setState({
               snapshot: msg.state,
               yourCombatantId: msg.yourCombatantId,
@@ -154,23 +145,9 @@ export function useNetworkCombat(
         }
       };
 
-      ws.onclose = (event) => {
+      ws.onclose = () => {
         if (!isActive()) return;
-
-        // Codes that indicate the server intentionally rejected the connection.
-        const isTerminal = event.code === 1000 || event.code === 1008;
-
-        if (
-          isTerminal ||
-          reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS
-        ) {
-          setState((prev) => ({ ...prev, connectionPhase: "disconnected" }));
-          return;
-        }
-
-        reconnectAttemptsRef.current++;
-        setState((prev) => ({ ...prev, connectionPhase: "reconnecting" }));
-        reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
+        setState((prev) => ({ ...prev, connectionPhase: "disconnected" }));
       };
     }
 
@@ -178,7 +155,6 @@ export function useNetworkCombat(
 
     return () => {
       effectTokenRef.current = null;
-      clearTimeout(reconnectTimerRef.current);
       wsRef.current?.close(1000, "Component unmounted");
       wsRef.current = null;
     };

@@ -20,6 +20,7 @@ import { MatchOverlay } from "./match-overlay";
 import { OpponentArea } from "./opponent-area";
 import { PlayerArea } from "./player-area";
 import { type PortraitFeedback } from "./portrait-card";
+import { QuickMenu } from "./quick-menu";
 import { TurnIndicator } from "./turn-indicator";
 import type { CombatControls } from "@/hooks/use-combat";
 import type { MatchParticipant } from "@/lib/simulation/match-factory";
@@ -573,7 +574,7 @@ export function CombatBoard({
       )}
 
       <section className="relative z-10 h-32 shrink-0">
-        <div className="absolute inset-x-0 -bottom-48 flex justify-center gap-2">
+        <div className="absolute inset-x-0 -bottom-28 flex justify-center gap-2">
           {perspectiveState.cards.map((card) => (
             <CombatCard
               key={card.instanceId}
@@ -594,6 +595,8 @@ export function CombatBoard({
           ))}
         </div>
       </section>
+
+      {!isMatchOver && <QuickMenu onLeave={onLeave} />}
 
       {handOffEnabled && matchPhase === "hand-off" && (
         <div className="bg-background absolute inset-0 z-20 flex flex-col items-center justify-center gap-8">

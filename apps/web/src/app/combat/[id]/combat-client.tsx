@@ -133,7 +133,7 @@ export function CombatClient({ encounterId }: CombatClientProps) {
       rewardCardDefinitions={isReplay ? [] : rewardCardDefinitions}
       onVictory={handleVictory}
       onReplay={() => setMatchKey((k) => k + 1)}
-      onLeave={() => router.push("/encounters")}
+      onLeave={() => router.push("/play")}
     />
   );
 }

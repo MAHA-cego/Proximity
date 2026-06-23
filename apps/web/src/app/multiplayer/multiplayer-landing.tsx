@@ -55,7 +55,15 @@ export function MultiplayerLanding() {
   };
 
   return (
-    <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center gap-12 px-6">
+    <div className="bg-background text-foreground relative flex min-h-screen flex-col items-center justify-center gap-12 px-6">
+      <button
+        type="button"
+        onClick={() => router.push("/play")}
+        className="border-border text-muted hover:bg-surface absolute top-4 left-6 cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
+      >
+        Back
+      </button>
+
       <p className="text-muted text-xs tracking-[0.3em] uppercase">
         Online Multiplayer
       </p>

@@ -1,5 +1,5 @@
-import { EncountersClient } from "./encounters-client";
+import { redirect } from "next/navigation";
 
 export default function EncountersPage() {
-  return <EncountersClient />;
+  redirect("/play");
 }

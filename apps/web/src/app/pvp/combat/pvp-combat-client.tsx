@@ -111,7 +111,7 @@ export function PvpCombatClient() {
       definition={definition}
       participants={participants}
       onReplay={() => setMatchKey((k) => k + 1)}
-      onLeave={() => router.push("/encounters")}
+      onLeave={() => router.push("/play")}
     />
   );
 }

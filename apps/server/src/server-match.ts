@@ -16,20 +16,15 @@ import type {
 
 const engine = createEngine();
 
-const RECONNECT_WINDOW_MS = 60_000;
+const DISCONNECT_GRACE_MS = 200;
 
 export class ServerMatch {
   private state: GameState;
   private readonly connections = new Map<string, WebSocket>();
-  private readonly connectionStatus = new Map<
-    string,
-    "connected" | "disconnected"
-  >();
-  private readonly abandonTimers = new Map<
+  private readonly disconnectTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
   >();
-  private isAbandoned = false;
   private isRematched = false;
 
   constructor(
@@ -48,26 +43,18 @@ export class ServerMatch {
       ws.close(1008, "Player not registered for this match");
       return;
     }
-    if (this.isAbandoned) {
-      ws.close(1008, "Match has been abandoned");
-      return;
-    }
     if (this.isRematched) {
       ws.close(1008, "Match has been rematched");
       return;
     }
 
-    const wasDisconnected =
-      this.connectionStatus.get(playerId) === "disconnected";
-
-    const timer = this.abandonTimers.get(playerId);
-    if (timer !== undefined) {
-      clearTimeout(timer);
-      this.abandonTimers.delete(playerId);
+    const pendingTimer = this.disconnectTimers.get(playerId);
+    if (pendingTimer !== undefined) {
+      clearTimeout(pendingTimer);
+      this.disconnectTimers.delete(playerId);
     }
 
     this.connections.set(playerId, ws);
-    this.connectionStatus.set(playerId, "connected");
 
     this.sendTo(ws, {
       type: "match-state",
@@ -75,24 +62,39 @@ export class ServerMatch {
       yourCombatantId: combatantId,
       definition: this.serializedDefinition,
     });
-
-    if (wasDisconnected) {
-      this.notifyOpponent(playerId, { type: "opponent-reconnected" });
-    }
   }
 
   removeConnection(playerId: string): void {
     this.connections.delete(playerId);
     if (this.isRematched) return;
-    this.connectionStatus.set(playerId, "disconnected");
-    this.notifyOpponent(playerId, { type: "opponent-disconnected" });
 
     const timer = setTimeout(() => {
-      this.isAbandoned = true;
-      this.abandonTimers.delete(playerId);
-      this.broadcast({ type: "match-abandoned" });
-    }, RECONNECT_WINDOW_MS);
-    this.abandonTimers.set(playerId, timer);
+      this.disconnectTimers.delete(playerId);
+      if (this.isRematched) return;
+      if (this.connections.has(playerId)) return;
+
+      const actorId = this.playerMap.get(playerId);
+      if (actorId && this.state.status === MatchStatus.InProgress) {
+        const concedeAction = { type: ActionType.Concede as const, actorId };
+        if (
+          engine.canExecuteAction(this.state, concedeAction, this.definition)
+        ) {
+          const result = engine.executeAction(
+            this.state,
+            concedeAction,
+            this.definition,
+          );
+          this.state = result.state;
+          this.broadcast({
+            type: "events",
+            events: result.events,
+            state: this.state,
+          });
+        }
+      }
+    }, DISCONNECT_GRACE_MS);
+
+    this.disconnectTimers.set(playerId, timer);
   }
 
   submitAction(playerId: string, msg: ClientMessage): void {
@@ -120,10 +122,12 @@ export class ServerMatch {
   }
 
   requestRematch(): string | null {
-    if (this.isAbandoned || this.isRematched || !this.lobbyCode) return null;
+    if (this.isRematched || !this.lobbyCode) return null;
     this.isRematched = true;
-    for (const timer of this.abandonTimers.values()) clearTimeout(timer);
-    this.abandonTimers.clear();
+    for (const timer of this.disconnectTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.disconnectTimers.clear();
     return this.lobbyCode;
   }
 
@@ -221,14 +225,6 @@ export class ServerMatch {
     for (const ws of this.connections.values()) {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(payload);
-      }
-    }
-  }
-
-  private notifyOpponent(excludePlayerId: string, msg: ServerMessage): void {
-    for (const [id, ws] of this.connections) {
-      if (id !== excludePlayerId) {
-        this.sendTo(ws, msg);
       }
     }
   }

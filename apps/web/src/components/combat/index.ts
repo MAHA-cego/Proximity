@@ -1,3 +1,4 @@
+export { CardIllustration } from "./card-illustration";
 export { CardRules } from "./card-rules";
 export { CombatBoard, type CombatBoardProps } from "./combat-board";
 export { CombatCard } from "./combat-card";
@@ -9,5 +10,6 @@ export { ModifierBadge } from "./modifier-badge";
 export { OpponentArea } from "./opponent-area";
 export { PlayerArea } from "./player-area";
 export { PortraitCard, type PortraitFeedback } from "./portrait-card";
+export { QuickMenu } from "./quick-menu";
 export { StatusChip } from "./status-chip";
 export { TurnIndicator } from "./turn-indicator";

@@ -1,4 +1,7 @@
 import type { CardDefinition, CardDefinitionId } from "@proximity/simulation";
+import { cardPrimaryColor, CARD_BORDER_CLASS } from "@/lib/card-color";
+import { cardIllustrationSrc } from "@/lib/illustrations";
+import { CardIllustration } from "./card-illustration";
 import { CardRules } from "./card-rules";
 
 function formatCardName(id: CardDefinitionId): string {
@@ -24,6 +27,7 @@ export function CombatCard({
   onPlay,
 }: CombatCardProps) {
   const onCooldown = remainingCooldown > 0;
+  const borderClass = CARD_BORDER_CLASS[cardPrimaryColor(cardDefinition)];
 
   return (
     <button
@@ -34,20 +38,17 @@ export function CombatCard({
       }}
       aria-disabled={!isPlayable}
       className={[
-        "group h-80 w-36 text-left",
+        "group h-56 w-40 text-left",
         "transition-transform duration-200",
         isPlayable
-          ? "cursor-pointer focus-within:-translate-y-48 hover:-translate-y-48"
+          ? "cursor-pointer focus-within:-translate-y-44 hover:-translate-y-44"
           : "cursor-not-allowed opacity-50",
       ].join(" ")}
     >
       <div
-        className={[
-          "flex h-full flex-col border",
-          isPlayable
-            ? "bg-surface border-foreground"
-            : "bg-surface border-border",
-        ].join(" ")}
+        className={["bg-surface flex h-full flex-col border", borderClass].join(
+          " ",
+        )}
       >
         {/* Card Name */}
         <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
@@ -57,7 +58,10 @@ export function CombatCard({
         </div>
 
         {/* Illustration */}
-        <div className="bg-surface-raised border-border h-24 w-full shrink-0 border-b" />
+        <CardIllustration
+          src={cardIllustrationSrc(String(cardDefinition.id))}
+          alt={formatCardName(cardDefinition.id)}
+        />
 
         {/* Cooldown / lock state */}
         <div className="border-border flex h-7 shrink-0 items-center border-b px-3">

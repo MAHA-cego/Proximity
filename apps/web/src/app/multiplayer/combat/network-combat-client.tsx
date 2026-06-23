@@ -39,7 +39,7 @@ export function NetworkCombatClient() {
 
   const network = useNetworkCombat(serverUrl, matchId, playerId);
 
-  const onLeave = () => router.push("/encounters");
+  const onLeave = () => router.push("/play");
 
   useEffect(() => {
     if (!network?.rematchCode) return;

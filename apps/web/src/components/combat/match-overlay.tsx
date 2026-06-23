@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { CardDefinition, CardDefinitionId } from "@proximity/simulation";
+import { cardPrimaryColor, CARD_BORDER_CLASS } from "@/lib/card-color";
+import { cardIllustrationSrc } from "@/lib/illustrations";
 import { Stack } from "@/components/ui";
+import { CardIllustration } from "./card-illustration";
 import { CardRules } from "./card-rules";
 
 function formatCardName(id: CardDefinitionId): string {
@@ -13,14 +16,23 @@ function formatCardName(id: CardDefinitionId): string {
 }
 
 function RewardCard({ definition }: { readonly definition: CardDefinition }) {
+  const borderClass = CARD_BORDER_CLASS[cardPrimaryColor(definition)];
   return (
-    <div className="bg-surface border-foreground flex h-80 w-36 flex-col border">
+    <div
+      className={[
+        "bg-surface flex h-56 w-40 flex-col border",
+        borderClass,
+      ].join(" ")}
+    >
       <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
         <p className="text-foreground truncate font-mono text-xs">
           {formatCardName(definition.id)}
         </p>
       </div>
-      <div className="bg-surface-raised border-border h-24 w-full shrink-0 border-b" />
+      <CardIllustration
+        src={cardIllustrationSrc(String(definition.id))}
+        alt={formatCardName(definition.id)}
+      />
       <div className="border-border flex h-7 shrink-0 items-center border-b px-3">
         <p className="text-muted font-mono text-xs">
           {definition.cooldown > 0 ? `cd ${definition.cooldown}` : "—"}
@@ -116,7 +128,7 @@ export function MatchOverlay({
               autoFocus
               className="border-foreground text-foreground hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
             >
-              Encounters
+              Menu
             </button>
             {onReplay && (
               <button
