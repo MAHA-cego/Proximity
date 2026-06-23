@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   EventType,
   MatchStatus,
@@ -21,7 +21,7 @@ import { OpponentArea } from "./opponent-area";
 import { PlayerArea } from "./player-area";
 import { type PortraitFeedback } from "./portrait-card";
 import { TurnIndicator } from "./turn-indicator";
-import { useCombat } from "@/hooks/use-combat";
+import type { CombatControls } from "@/hooks/use-combat";
 import type { MatchParticipant } from "@/lib/simulation/match-factory";
 
 const EVENT_DELAY_MS = 150;
@@ -33,7 +33,8 @@ type MatchPhase =
   | "match-complete"
   | "victory"
   | "defeat"
-  | "hand-off";
+  | "hand-off"
+  | "waiting";
 
 // Semantic color palette:
 // crimson  = damage (dealt, DoT statuses)
@@ -285,21 +286,23 @@ function renderEvent(
 }
 
 export interface CombatBoardProps {
-  readonly matchId: string;
   readonly localParticipant: MatchParticipant;
   readonly opponentParticipant: MatchParticipant;
   readonly definition: MatchDefinition;
   readonly rewardCardDefinitions: readonly CardDefinition[];
+  readonly controls: CombatControls;
+  readonly handOffEnabled?: boolean;
   readonly onVictory?: () => void;
   readonly onLeave: () => void;
 }
 
 export function CombatBoard({
-  matchId,
   localParticipant,
   opponentParticipant,
   definition,
   rewardCardDefinitions,
+  controls,
+  handOffEnabled = true,
   onVictory,
   onLeave,
 }: CombatBoardProps) {
@@ -307,11 +310,6 @@ export function CombatBoard({
 
   const [perspectiveId, setPerspectiveId] = useState<CombatantId>(
     () => localId,
-  );
-
-  const participants = useMemo(
-    () => [localParticipant, opponentParticipant] as const,
-    [localParticipant, opponentParticipant],
   );
 
   const {
@@ -322,7 +320,7 @@ export function CombatBoard({
     canPlayCard,
     endTurn,
     reset,
-  } = useCombat(matchId, definition, participants);
+  } = controls;
 
   const [matchPhase, setMatchPhase] = useState<MatchPhase>("player-turn");
   const [playbackSide, setPlaybackSide] = useState<
@@ -354,6 +352,10 @@ export function CombatBoard({
 
   const activeState = snapshot.combatants.find(
     (cs) => cs.combatant.id === snapshot.turn.activeCombatantId,
+  )!;
+
+  const perspectiveState = snapshot.combatants.find(
+    (cs) => cs.combatant.id === perspectiveId,
   )!;
 
   const nextParticipant =
@@ -410,7 +412,7 @@ export function CombatBoard({
         } else if (
           snapshot.turn.activeCombatantId !== perspectiveIdRef.current
         ) {
-          setMatchPhase("hand-off");
+          setMatchPhase(handOffEnabled ? "hand-off" : "waiting");
         } else {
           setMatchPhase("player-turn");
         }
@@ -430,6 +432,7 @@ export function CombatBoard({
     snapshot.status,
     snapshot.turn.activeCombatantId,
     opponentState.health,
+    handOffEnabled,
   ]);
 
   useEffect(() => {
@@ -557,16 +560,18 @@ export function CombatBoard({
           <p className="text-muted font-mono text-xs tracking-[0.3em] uppercase">
             {matchPhase === "player-turn"
               ? "your turn"
-              : playbackSide === "opponent"
-                ? "opponent acting"
-                : "resolving"}
+              : matchPhase === "waiting"
+                ? "waiting for opponent"
+                : playbackSide === "opponent"
+                  ? "opponent acting"
+                  : "resolving"}
           </p>
         </div>
       )}
 
       <section className="relative z-10 h-32 shrink-0">
         <div className="absolute inset-x-0 -bottom-48 flex justify-center gap-2">
-          {activeState.cards.map((card) => (
+          {perspectiveState.cards.map((card) => (
             <CombatCard
               key={card.instanceId}
               cardDefinition={
@@ -587,7 +592,7 @@ export function CombatBoard({
         </div>
       </section>
 
-      {matchPhase === "hand-off" && (
+      {handOffEnabled && matchPhase === "hand-off" && (
         <div className="bg-background absolute inset-0 z-20 flex flex-col items-center justify-center gap-8">
           <Stack gap={4} align="center">
             <p className="text-muted text-xs tracking-[0.3em] uppercase">

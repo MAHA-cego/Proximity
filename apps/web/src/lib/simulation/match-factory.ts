@@ -13,7 +13,13 @@ import type { EncounterDefinition } from "./encounters";
 
 export type ActionProvider =
   | { readonly type: "human" }
-  | { readonly type: "ai"; readonly agent: AiAgent };
+  | { readonly type: "ai"; readonly agent: AiAgent }
+  | {
+      readonly type: "network";
+      readonly serverUrl: string;
+      readonly matchId: string;
+      readonly playerId: string;
+    };
 
 export const PLAYER_COMBATANT_ID = "player" as CombatantId;
 export const PLAYER_2_COMBATANT_ID = "player-2" as CombatantId;

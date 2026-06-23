@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type CardDefinitionId } from "@proximity/simulation";
 import { CombatBoard } from "@/components/combat/combat-board";
+import { useCombat } from "@/hooks/use-combat";
 import { useProgression } from "@/lib/progression/progression-context";
 import {
   createLocalPlayerParticipant,
@@ -59,13 +60,20 @@ export function PvpCombatClient() {
     [p1Participant, p2Participant, unlockedCardDefinitions],
   );
 
+  const participants = useMemo(
+    () => [p1Participant, p2Participant] as const,
+    [p1Participant, p2Participant],
+  );
+
+  const controls = useCombat("pvp", definition, participants);
+
   return (
     <CombatBoard
-      matchId="pvp"
       localParticipant={p1Participant}
       opponentParticipant={p2Participant}
       definition={definition}
       rewardCardDefinitions={[]}
+      controls={controls}
       onLeave={() => router.push("/encounters")}
     />
   );

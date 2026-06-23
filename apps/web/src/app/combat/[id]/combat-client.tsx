@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { type CardDefinition } from "@proximity/simulation";
 import { CombatBoard } from "@/components/combat/combat-board";
+import { useCombat } from "@/hooks/use-combat";
 import { useDeck } from "@/lib/progression/deck-context";
 import { useProgression } from "@/lib/progression/progression-context";
 import { ENCOUNTER_REGISTRY } from "@/lib/simulation/encounters";
@@ -51,6 +52,13 @@ export function CombatClient({ encounterId }: CombatClientProps) {
     [localParticipant, opponentParticipant, allCardDefinitions],
   );
 
+  const participants = useMemo(
+    () => [localParticipant, opponentParticipant] as const,
+    [localParticipant, opponentParticipant],
+  );
+
+  const controls = useCombat(encounterId, definition, participants);
+
   const rewardCardDefinitions = useMemo<readonly CardDefinition[]>(
     () =>
       encounter.rewardCardIds
@@ -74,11 +82,11 @@ export function CombatClient({ encounterId }: CombatClientProps) {
 
   return (
     <CombatBoard
-      matchId={encounterId}
       localParticipant={localParticipant}
       opponentParticipant={opponentParticipant}
       definition={definition}
       rewardCardDefinitions={isReplay ? [] : rewardCardDefinitions}
+      controls={controls}
       onVictory={handleVictory}
       onLeave={() => router.push("/encounters")}
     />

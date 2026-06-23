@@ -104,6 +104,13 @@ export function EncountersClient() {
           >
             <span className="text-foreground font-mono text-sm">Local PvP</span>
           </button>
+          <button
+            type="button"
+            onClick={() => router.push("/multiplayer")}
+            className="border-border hover:bg-surface-raised flex w-full cursor-pointer items-center justify-between border-b py-4 text-left transition-colors duration-150"
+          >
+            <span className="text-foreground font-mono text-sm">Online</span>
+          </button>
         </div>
       </div>
     </main>
