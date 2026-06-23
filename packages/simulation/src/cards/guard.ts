@@ -21,7 +21,7 @@ export const Guard: CardDefinition = {
           type: EffectType.ApplyStatus,
           statusType: StatusType.Shield,
           duration: 1,
-          amount: 10,
+          amount: 15,
         },
       ],
     },

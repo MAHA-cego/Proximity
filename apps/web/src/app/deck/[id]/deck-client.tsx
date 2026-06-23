@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import {
-  STARTER_CARD_DEFINITIONS,
   type CardDefinition,
   type CardDefinitionId,
 } from "@proximity/simulation";
@@ -51,7 +50,7 @@ function CollectionCard({
     <button
       type="button"
       onClick={onAdd}
-      className="bg-surface border-border hover:border-foreground flex h-60 w-36 cursor-pointer flex-col border text-left transition-colors duration-150"
+      className="bg-surface border-border hover:border-foreground flex h-80 w-36 cursor-pointer flex-col border text-left transition-colors duration-150"
     >
       <CardFace definition={definition} />
     </button>
@@ -101,16 +100,7 @@ export function DeckClient({ encounterId }: DeckClientProps) {
   const deckSet = new Set(activeDeck);
   const emptySlots = DECK_SIZE - activeDeck.length;
 
-  // Split unequipped cards into earned rewards and starter cards for visual grouping.
   const unequippedIds = [...unlockedCardIds].filter((id) => !deckSet.has(id));
-  const earnedUnequipped = unequippedIds.filter(
-    (id) => !STARTER_CARD_DEFINITIONS.has(id),
-  );
-  const starterUnequipped = unequippedIds.filter((id) =>
-    STARTER_CARD_DEFINITIONS.has(id),
-  );
-  const showGroupLabels =
-    earnedUnequipped.length > 0 && starterUnequipped.length > 0;
 
   const remaining = DECK_SIZE - activeDeck.length;
 
@@ -138,7 +128,7 @@ export function DeckClient({ encounterId }: DeckClientProps) {
                   key={id}
                   type="button"
                   onClick={() => removeCard(id)}
-                  className="bg-surface border-foreground flex h-60 w-36 cursor-pointer flex-col border text-left transition-opacity duration-150 hover:opacity-60"
+                  className="bg-surface border-foreground flex h-80 w-36 cursor-pointer flex-col border text-left transition-opacity duration-150 hover:opacity-60"
                 >
                   <CardFace definition={def} />
                 </button>
@@ -147,7 +137,7 @@ export function DeckClient({ encounterId }: DeckClientProps) {
             {Array.from({ length: emptySlots }, (_, i) => (
               <div
                 key={`empty-${i}`}
-                className="border-border h-60 w-36 border border-dashed"
+                className="border-border h-80 w-36 border border-dashed"
               />
             ))}
           </Stack>
@@ -164,21 +154,11 @@ export function DeckClient({ encounterId }: DeckClientProps) {
           {unequippedIds.length === 0 ? (
             <p className="text-muted text-xs">All cards are in your deck.</p>
           ) : (
-            <Stack gap={6}>
-              {/* Earned (reward) cards appear first — they are the new additions */}
-              <CardGroup
-                label={showGroupLabels ? "Earned" : undefined}
-                cardIds={earnedUnequipped}
-                definitions={unlockedCardDefinitions}
-                onAdd={addCard}
-              />
-              <CardGroup
-                label={showGroupLabels ? "Starter" : undefined}
-                cardIds={starterUnequipped}
-                definitions={unlockedCardDefinitions}
-                onAdd={addCard}
-              />
-            </Stack>
+            <CardGroup
+              cardIds={unequippedIds}
+              definitions={unlockedCardDefinitions}
+              onAdd={addCard}
+            />
           )}
         </Stack>
       </section>

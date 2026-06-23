@@ -32,7 +32,7 @@ export function formatTrigger(trigger: AbilityTrigger): string {
     case AbilityTrigger.Passive:
       return "Passive";
     case AbilityTrigger.OnOpponentCardUse:
-      return "On Opponent Card Use";
+      return "Reaction";
   }
 }
 
@@ -61,23 +61,23 @@ function formatRequirement(req: AbilityRequirement): string {
         req.subject === RequirementSubject.Enemy ? "Enemy" : "Your";
       const comp =
         req.comparison === Comparison.Below
-          ? "below"
+          ? "<"
           : req.comparison === Comparison.BelowOrEqual
-            ? "at most"
-            : "above";
-      return `${subject} health ${comp} ${req.threshold}`;
+            ? "≤"
+            : ">";
+      return `${subject} hp ${comp} ${req.threshold}`;
     }
     case RequirementType.Status:
       return `Has ${formatStatusName(req.statusType)}`;
     case RequirementType.CardUsed:
-      return `After using ${req.cardDefinitionIds
+      return req.cardDefinitionIds
         .map((id) =>
           String(id)
             .split("-")
             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
             .join(" "),
         )
-        .join(" or ")}`;
+        .join(" or ");
   }
 }
 
@@ -136,14 +136,12 @@ interface CardRulesProps {
 
 export function CardRules({ definition }: CardRulesProps) {
   return (
-    <Stack gap={3}>
+    <Stack gap={2}>
       {definition.abilities.map((ability, i) => {
         const triggerLabel = formatTrigger(ability.trigger);
-        const targetLabel = formatTargeting(ability.targeting);
-        const triggerLine = targetLabel
-          ? `${triggerLabel} — ${targetLabel}`
-          : triggerLabel;
         const lines = ability.effects.flatMap((e) => effectLines(e));
+
+        const showTrigger = ability.trigger !== AbilityTrigger.OnUse;
 
         return (
           <Stack key={i} gap={2}>
@@ -151,14 +149,16 @@ export function CardRules({ definition }: CardRulesProps) {
               <Stack gap={1}>
                 {ability.requirements.map((req, j) => (
                   <p key={j} className="text-muted font-mono text-xs">
-                    Requires: {formatRequirement(req)}
+                    {formatRequirement(req)}
                   </p>
                 ))}
               </Stack>
             )}
-            <p className="text-muted text-xs tracking-[0.3em] uppercase">
-              {triggerLine}
-            </p>
+            {showTrigger && (
+              <p className="text-muted text-xs tracking-[0.3em] uppercase">
+                {triggerLabel}
+              </p>
+            )}
             <Stack gap={1}>
               {lines.map((line, k) => (
                 <p key={k} className="text-foreground font-mono text-xs">

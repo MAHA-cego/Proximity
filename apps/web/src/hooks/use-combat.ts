@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   ActionType,
-  CombatantControlType,
   MatchStatus,
   createEngine,
   type CardInstanceId,
@@ -12,28 +11,72 @@ import {
   type MatchDefinition,
   type MatchId,
 } from "@proximity/simulation";
-import type { AiAgent } from "@proximity/ai";
+import type { MatchParticipant } from "@/lib/simulation/match-factory";
 
 interface CombatState {
   readonly snapshot: GameState;
-  readonly playerPhaseEvents: readonly GameEvent[];
-  readonly aiPhaseEvents: readonly GameEvent[];
+  readonly localPhaseEvents: readonly GameEvent[];
+  readonly automatedPhaseEvents: readonly GameEvent[];
 }
 
 export interface CombatControls {
   readonly snapshot: GameState;
-  readonly playerPhaseEvents: readonly GameEvent[];
-  readonly aiPhaseEvents: readonly GameEvent[];
+  readonly localPhaseEvents: readonly GameEvent[];
+  readonly automatedPhaseEvents: readonly GameEvent[];
   readonly playCard: (cardInstanceId: CardInstanceId) => void;
   readonly canPlayCard: (cardInstanceId: CardInstanceId) => boolean;
   readonly endTurn: () => void;
   readonly reset: () => void;
 }
 
+function getProvider(
+  state: GameState,
+  participants: readonly [MatchParticipant, MatchParticipant],
+): MatchParticipant["provider"] {
+  const activeId = state.turn.activeCombatantId;
+  const participant = participants.find((p) => p.combatant.id === activeId);
+  return participant?.provider ?? { type: "human" };
+}
+
+// Drive all automated turns until a human turn begins or the match ends.
+function driveAutomatedTurns(
+  initial: GameState,
+  participants: readonly [MatchParticipant, MatchParticipant],
+  definition: MatchDefinition,
+  engine: ReturnType<typeof createEngine>,
+  events: GameEvent[],
+): GameState {
+  let snapshot = initial;
+  while (snapshot.status === MatchStatus.InProgress) {
+    const provider = getProvider(snapshot, participants);
+    if (provider.type !== "ai") break;
+
+    const actorId = snapshot.turn.activeCombatantId;
+    const action = provider.agent.selectAction(snapshot, definition);
+
+    const result = engine.executeAction(snapshot, action, definition);
+    events.push(...result.events);
+    snapshot = result.state;
+
+    if (snapshot.status === MatchStatus.Completed) break;
+
+    if (action.type === ActionType.UseCard) {
+      const endResult = engine.executeAction(
+        snapshot,
+        { type: ActionType.EndTurn, actorId },
+        definition,
+      );
+      events.push(...endResult.events);
+      snapshot = endResult.state;
+    }
+  }
+  return snapshot;
+}
+
 export function useCombat(
   encounterId: string,
   definition: MatchDefinition,
-  agent: AiAgent,
+  participants: readonly [MatchParticipant, MatchParticipant],
 ): CombatControls {
   const engine = useMemo(() => createEngine(), []);
 
@@ -42,8 +85,8 @@ export function useCombat(
       `${encounterId}-${Date.now()}` as MatchId,
       definition,
     ),
-    playerPhaseEvents: [],
-    aiPhaseEvents: [],
+    localPhaseEvents: [],
+    automatedPhaseEvents: [],
   }));
 
   const playCard = useCallback(
@@ -52,11 +95,10 @@ export function useCombat(
         if (prev.snapshot.status !== MatchStatus.InProgress) return prev;
 
         let snapshot = prev.snapshot;
-        const playerEvents: GameEvent[] = [];
-        const aiEvents: GameEvent[] = [];
+        const localEvents: GameEvent[] = [];
+        const automatedEvents: GameEvent[] = [];
         const actorId = snapshot.turn.activeCombatantId;
 
-        // Silently reject invalid plays rather than letting the engine throw.
         if (
           !engine.canExecuteAction(
             snapshot,
@@ -67,69 +109,46 @@ export function useCombat(
           return prev;
         }
 
-        // Player plays their chosen card.
         const useResult = engine.executeAction(
           snapshot,
           { type: ActionType.UseCard, actorId, cardInstanceId },
           definition,
         );
-        playerEvents.push(...useResult.events);
+        localEvents.push(...useResult.events);
         snapshot = useResult.state;
 
         if (snapshot.status === MatchStatus.Completed) {
           return {
             snapshot,
-            playerPhaseEvents: playerEvents,
-            aiPhaseEvents: aiEvents,
+            localPhaseEvents: localEvents,
+            automatedPhaseEvents: automatedEvents,
           };
         }
 
-        // Player ends their turn.
-        const playerEndResult = engine.executeAction(
+        const endResult = engine.executeAction(
           snapshot,
           { type: ActionType.EndTurn, actorId },
           definition,
         );
-        playerEvents.push(...playerEndResult.events);
-        snapshot = playerEndResult.state;
+        localEvents.push(...endResult.events);
+        snapshot = endResult.state;
 
-        // Drive all AI turns until a human turn begins or the match ends.
-        while (snapshot.status === MatchStatus.InProgress) {
-          const activeCs = snapshot.combatants.find(
-            (cs) => cs.combatant.id === snapshot.turn.activeCombatantId,
-          );
-          if (activeCs?.combatant.controlType !== CombatantControlType.AI)
-            break;
-
-          const aiActorId = snapshot.turn.activeCombatantId;
-          const aiAction = agent.selectAction(snapshot, definition);
-
-          const aiResult = engine.executeAction(snapshot, aiAction, definition);
-          aiEvents.push(...aiResult.events);
-          snapshot = aiResult.state;
-
-          if (snapshot.status === MatchStatus.Completed) break;
-
-          // If the AI played a card, end its turn.
-          if (aiAction.type === ActionType.UseCard) {
-            const aiEndResult = engine.executeAction(
-              snapshot,
-              { type: ActionType.EndTurn, actorId: aiActorId },
-              definition,
-            );
-            aiEvents.push(...aiEndResult.events);
-            snapshot = aiEndResult.state;
-          }
-        }
+        snapshot = driveAutomatedTurns(
+          snapshot,
+          participants,
+          definition,
+          engine,
+          automatedEvents,
+        );
 
         return {
           snapshot,
-          playerPhaseEvents: playerEvents,
-          aiPhaseEvents: aiEvents,
+          localPhaseEvents: localEvents,
+          automatedPhaseEvents: automatedEvents,
         };
       });
     },
-    [engine, definition, agent],
+    [engine, definition, participants],
   );
 
   const endTurn = useCallback(() => {
@@ -137,50 +156,33 @@ export function useCombat(
       if (prev.snapshot.status !== MatchStatus.InProgress) return prev;
 
       let snapshot = prev.snapshot;
-      const playerEvents: GameEvent[] = [];
-      const aiEvents: GameEvent[] = [];
+      const localEvents: GameEvent[] = [];
+      const automatedEvents: GameEvent[] = [];
       const actorId = snapshot.turn.activeCombatantId;
 
-      const playerEndResult = engine.executeAction(
+      const endResult = engine.executeAction(
         snapshot,
         { type: ActionType.EndTurn, actorId },
         definition,
       );
-      playerEvents.push(...playerEndResult.events);
-      snapshot = playerEndResult.state;
+      localEvents.push(...endResult.events);
+      snapshot = endResult.state;
 
-      while (snapshot.status === MatchStatus.InProgress) {
-        const activeCs = snapshot.combatants.find(
-          (cs) => cs.combatant.id === snapshot.turn.activeCombatantId,
-        );
-        if (activeCs?.combatant.controlType !== CombatantControlType.AI) break;
-
-        const aiActorId = snapshot.turn.activeCombatantId;
-        const aiAction = agent.selectAction(snapshot, definition);
-        const aiResult = engine.executeAction(snapshot, aiAction, definition);
-        aiEvents.push(...aiResult.events);
-        snapshot = aiResult.state;
-
-        if (snapshot.status === MatchStatus.Completed) break;
-
-        if (aiAction.type === ActionType.UseCard) {
-          const aiEndResult = engine.executeAction(
-            snapshot,
-            { type: ActionType.EndTurn, actorId: aiActorId },
-            definition,
-          );
-          aiEvents.push(...aiEndResult.events);
-          snapshot = aiEndResult.state;
-        }
-      }
+      snapshot = driveAutomatedTurns(
+        snapshot,
+        participants,
+        definition,
+        engine,
+        automatedEvents,
+      );
 
       return {
         snapshot,
-        playerPhaseEvents: playerEvents,
-        aiPhaseEvents: aiEvents,
+        localPhaseEvents: localEvents,
+        automatedPhaseEvents: automatedEvents,
       };
     });
-  }, [engine, definition, agent]);
+  }, [engine, definition, participants]);
 
   const canPlayCard = useCallback(
     (cardInstanceId: CardInstanceId): boolean => {
@@ -203,15 +205,15 @@ export function useCombat(
         `${encounterId}-${Date.now()}` as MatchId,
         definition,
       ),
-      playerPhaseEvents: [],
-      aiPhaseEvents: [],
+      localPhaseEvents: [],
+      automatedPhaseEvents: [],
     });
   }, [engine, encounterId, definition]);
 
   return {
     snapshot: state.snapshot,
-    playerPhaseEvents: state.playerPhaseEvents,
-    aiPhaseEvents: state.aiPhaseEvents,
+    localPhaseEvents: state.localPhaseEvents,
+    automatedPhaseEvents: state.automatedPhaseEvents,
     playCard,
     canPlayCard,
     endTurn,

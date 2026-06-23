@@ -1,4 +1,5 @@
 export { CardRules } from "./card-rules";
+export { CombatBoard, type CombatBoardProps } from "./combat-board";
 export { CombatCard } from "./combat-card";
 export { CombatLogEntry, type EntryAlignment } from "./combat-log-entry";
 export { ContextPanel } from "./context-panel";

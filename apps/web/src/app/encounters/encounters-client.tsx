@@ -93,6 +93,18 @@ export function EncountersClient() {
             );
           })}
         </div>
+        <p className="text-muted text-xs tracking-[0.3em] uppercase">
+          Multiplayer
+        </p>
+        <div className="border-border border-t">
+          <button
+            type="button"
+            onClick={() => router.push("/pvp/setup")}
+            className="border-border hover:bg-surface-raised flex w-full cursor-pointer items-center justify-between border-b py-4 text-left transition-colors duration-150"
+          >
+            <span className="text-foreground font-mono text-sm">Local PvP</span>
+          </button>
+        </div>
       </div>
     </main>
   );

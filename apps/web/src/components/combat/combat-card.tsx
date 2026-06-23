@@ -34,10 +34,10 @@ export function CombatCard({
       }}
       aria-disabled={!isPlayable}
       className={[
-        "group h-60 w-36 text-left",
+        "group h-80 w-36 text-left",
         "transition-transform duration-200",
         isPlayable
-          ? "cursor-pointer focus-within:-translate-y-28 hover:-translate-y-28"
+          ? "cursor-pointer focus-within:-translate-y-48 hover:-translate-y-48"
           : "cursor-not-allowed opacity-50",
       ].join(" ")}
     >

@@ -68,6 +68,7 @@ export function resolveEffects(
     }
   }
 
+  const blockedTargetIndices = new Set<number>();
   for (const effect of ability.effects) {
     dispatchEffect(
       context,
@@ -77,6 +78,7 @@ export function resolveEffects(
       cardTargetCombatantIndex,
       cardTargetCardIndex,
       triggeredByCardId,
+      blockedTargetIndices,
     );
   }
 
@@ -91,6 +93,7 @@ function dispatchEffect(
   cardTargetCombatantIndex: number,
   cardTargetCardIndex: number,
   triggeredByCardId?: CardDefinitionId,
+  blockedTargetIndices: Set<number> = new Set(),
 ): void {
   switch (effect.type) {
     case EffectType.Group: {
@@ -103,6 +106,7 @@ function dispatchEffect(
           cardTargetCombatantIndex,
           cardTargetCardIndex,
           triggeredByCardId,
+          blockedTargetIndices,
         );
       }
       break;
@@ -127,6 +131,7 @@ function dispatchEffect(
           cardTargetCombatantIndex,
           cardTargetCardIndex,
           triggeredByCardId,
+          blockedTargetIndices,
         );
       }
       break;
@@ -228,6 +233,9 @@ function dispatchEffect(
         );
         const shieldReduction = shieldStatus ? shieldStatus.amount : 0;
         const actualDamage = Math.max(0, totalDamage - shieldReduction);
+        if (totalDamage > 0 && shieldReduction > 0 && actualDamage === 0) {
+          blockedTargetIndices.add(targetIndex);
+        }
         const updatedCombatant = {
           ...target,
           health: target.health - actualDamage,
@@ -454,6 +462,7 @@ function dispatchEffect(
 
     case EffectType.ApplyStatus: {
       for (const targetIndex of targetIndices) {
+        if (blockedTargetIndices.has(targetIndex)) continue;
         const { state } = context;
         const target = state.combatants[targetIndex];
         const newStatus: RuntimeStatus = {

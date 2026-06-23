@@ -14,7 +14,7 @@ function formatCardName(id: CardDefinitionId): string {
 
 function RewardCard({ definition }: { readonly definition: CardDefinition }) {
   return (
-    <div className="bg-surface border-foreground flex h-60 w-36 flex-col border">
+    <div className="bg-surface border-foreground flex h-80 w-36 flex-col border">
       <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
         <p className="text-foreground truncate font-mono text-xs">
           {formatCardName(definition.id)}
@@ -110,18 +110,18 @@ export function MatchOverlay({
           <Stack direction="row" gap={3}>
             <button
               type="button"
-              onClick={onReplay}
+              onClick={onLeave}
               autoFocus
               className="border-foreground text-foreground hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
             >
-              Play Again
+              Encounters
             </button>
             <button
               type="button"
-              onClick={onLeave}
+              onClick={onReplay}
               className="border-border text-muted hover:bg-surface cursor-pointer border px-4 py-2 font-mono text-xs tracking-[0.3em] uppercase"
             >
-              Encounters
+              Replay
             </button>
           </Stack>
         )}

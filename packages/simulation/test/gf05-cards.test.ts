@@ -8,6 +8,8 @@ import {
   Guard,
   HEAVY_STRIKE_ID,
   HeavyStrike,
+  LACERATION_ID,
+  Laceration,
   REGENERATION_ID,
   Regeneration,
   SLASH_ID,
@@ -78,7 +80,7 @@ describe("Guard", () => {
     cardDefinitions: new Map([[Guard.id, Guard]]),
   };
 
-  it("applies Shield (duration:1, amount:10) to self", () => {
+  it("applies Shield (duration:1, amount:15) to self", () => {
     const engine = createEngine();
     const state = engine.executeAction(
       createGame({ matchId: "m" as MatchId, definition }),
@@ -91,10 +93,10 @@ describe("Guard", () => {
     );
     expect(shield).toBeDefined();
     expect(shield?.remainingDuration).toBe(1);
-    expect(shield?.amount).toBe(10);
+    expect(shield?.amount).toBe(15);
   });
 
-  it("Shield fully absorbs an attack equal to its amount", () => {
+  it("Shield fully absorbs an attack below its amount", () => {
     const attackDef = {
       combatants: [
         {
@@ -114,7 +116,7 @@ describe("Guard", () => {
     const engine = createEngine();
     let state = createGame({ matchId: "m" as MatchId, definition: attackDef });
 
-    // P1 uses Guard → Shield(1,10) on self
+    // P1 uses Guard → Shield(1,15) on self
     state = engine.executeAction(
       state,
       useCard("p1" as CombatantId, "p1:1" as CardInstanceId),
@@ -134,6 +136,53 @@ describe("Guard", () => {
     ).state;
 
     expect(state.combatants[0].health).toBe(100);
+  });
+
+  it("Shield fully absorbing an attack also blocks status effects from that attack", () => {
+    const lacerationDef = {
+      combatants: [
+        {
+          combatant: { ...playerOne, id: "p1" as CombatantId },
+          loadout: { cardDefinitionIds: [GUARD_ID] },
+        },
+        {
+          combatant: { ...playerTwo, id: "p2" as CombatantId },
+          loadout: { cardDefinitionIds: [LACERATION_ID] },
+        },
+      ],
+      cardDefinitions: new Map([
+        [Guard.id, Guard],
+        [Laceration.id, Laceration],
+      ]),
+    };
+    const engine = createEngine();
+    let state = createGame({
+      matchId: "m" as MatchId,
+      definition: lacerationDef,
+    });
+
+    // P1 uses Guard → Shield(1,15) on self
+    state = engine.executeAction(
+      state,
+      useCard("p1" as CombatantId, "p1:1" as CardInstanceId),
+      lacerationDef,
+    ).state;
+    // P1 EndTurn → P2's turn
+    state = engine.executeAction(
+      state,
+      endTurn("p1" as CombatantId),
+      lacerationDef,
+    ).state;
+    // P2 uses Laceration (4 damage + Bleeding) → Shield absorbs all 4 damage
+    state = engine.executeAction(
+      state,
+      useCard("p2" as CombatantId, "p2:1" as CardInstanceId),
+      lacerationDef,
+    ).state;
+
+    const p1 = state.combatants[0];
+    expect(p1.health).toBe(100);
+    expect(p1.statuses.some((s) => s.type === StatusType.Bleeding)).toBe(false);
   });
 
   it("Shield expires at the start of the next turn", () => {
